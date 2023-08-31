@@ -12,16 +12,13 @@ public struct CacheUUID: Codable {
 	// MARK: Stored Properties
 	public let body: UUID
 	public let exp: Date?
-	public let policy: SavePolicy
 
 	// MARK: - Init
 	public init(
 		body: UUID,
-		exp: Date? = nil,
-		policy: SavePolicy = .none
+		exp: Date? = nil
 	) {
 		self.body = body
 		self.exp = exp
-		self.policy = policy
 	}
 }

@@ -144,7 +144,7 @@ struct DiskStorage: StorageProtocol {
 				print("Grape error: incorrect data from \(fileURL) at \(i) line.")
 				continue
 			}
-			// decode expire date
+			// decode disk data
 			guard let item = try? decoder.decode(DiskModel.self, from: data) else {
 				print("Grape error: incorrect data from \(fileURL) at \(i) line.")
 				continue
@@ -158,20 +158,20 @@ struct DiskStorage: StorageProtocol {
 			switch item.type {
 			case .date:
 				if let body = formatter.date(from: item.body) {
-					cacheDate[item.key] = CacheDate(body: body, exp: item.exp, policy: item.policy)
+					cacheDate[item.key] = CacheDate(body: body, exp: item.exp)
 				}
 			case .int:
 				if let body = Int(item.body) {
-					cacheInt[item.key] = CacheInt(body: body, exp: item.exp, policy: item.policy)
+					cacheInt[item.key] = CacheInt(body: body, exp: item.exp)
 				}
 			case .string:
-				cacheString[item.key] = CacheString(body: item.body, exp: item.exp, policy: item.policy)
+				cacheString[item.key] = CacheString(body: item.body, exp: item.exp)
 			case .uuid:
 				if let body = UUID(uuidString: item.body) {
-					cacheUUID[item.key] = CacheUUID(body: body, exp: item.exp, policy: item.policy)
+					cacheUUID[item.key] = CacheUUID(body: body, exp: item.exp)
 				}
 			default:
-				cache[item.key] = CacheString(body: item.body, exp: item.exp, policy: item.policy)
+				cache[item.key] = CacheString(body: item.body, exp: item.exp)
 			}
 		}
 		try handle.close()

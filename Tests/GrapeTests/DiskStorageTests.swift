@@ -35,7 +35,7 @@ class DiskStorageTests: XCTestCase {
 		let exp = Date(timeIntervalSinceNow: 600)
 		let model = TestModel(name: "Victor", age: 20)
 		let string = model.toJson()
-		let value = DiskModel(body: string, exp: exp, key: key, policy: .sync, type: .model)
+		let value = DiskModel(body: string, exp: exp, key: key, type: .model)
 
 		// When
 		try await sut.write(value)
@@ -57,7 +57,7 @@ class DiskStorageTests: XCTestCase {
 		let key = "testKey"
 		let exp = Date(timeIntervalSinceNow: 60)
 		let string = model.toJson()
-		let value = DiskModel(body: string, exp: exp, key: key, policy: .sync, type: .model)
+		let value = DiskModel(body: string, exp: exp, key: key, type: .model)
 		try await sut.write(value)
 
 		// When
@@ -75,13 +75,13 @@ class DiskStorageTests: XCTestCase {
 		let key1 = "TestKey1"
 		let exp1 = Date(timeIntervalSinceNow: 60) // Expires in 60 seconds
 		let string1 = model1.toJson()
-		let value1 = DiskModel(body: string1, exp: exp1, key: key1, policy: .sync, type: .model)
+		let value1 = DiskModel(body: string1, exp: exp1, key: key1, type: .model)
 
 		let model2 = TestModel(name: "Mike", age: 30)
 		let key2 = "TestKey2"
 		let exp2 = Date(timeIntervalSinceNow: -60) // Expired 60 seconds ago
 		let string2 = model2.toJson()
-		let value2 = DiskModel(body: string2, exp: exp2, key: key2, policy: .sync, type: .model)
+		let value2 = DiskModel(body: string2, exp: exp2, key: key2, type: .model)
 
 		// When
 		try await sut.write(value1)

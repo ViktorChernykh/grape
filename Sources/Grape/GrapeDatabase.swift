@@ -17,8 +17,6 @@ public actor GrapeDatabase {
 	/// Disk storage delegate.
 	var storage: StorageProtocol?
 
-	private var useDiskStorage = false
-
 	private var cacheDate: [String: CacheDate] = [:]
 	private var cacheInt: [String: CacheInt] = [:]
 	private var cacheString: [String: CacheString] = [:]
@@ -148,7 +146,7 @@ public actor GrapeDatabase {
 	public func set<T: Codable>(_ model: T, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
 		let data = try encoder.encode(model)
 		let string = String(data: data, encoding: .utf8) ?? ""
-		let cacheValue = CacheString(body: string, exp: exp, policy: policy)
+		let cacheValue = CacheString(body: string, exp: exp)
 		cache[key] = cacheValue
 		try await setToDiscStorage(value: string, exp: exp, key: key, policy: policy, type: .model)
 	}
@@ -160,7 +158,7 @@ public actor GrapeDatabase {
 	///   - exp: expiration date.
 	///   - policy: disk save policy: `.none` `.sync` `.async` .
 	public func setString(_ value: String, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
-		let cacheValue = CacheString(body: value, exp: exp, policy: policy)
+		let cacheValue = CacheString(body: value, exp: exp)
 		cacheString[key] = cacheValue
 		try await setToDiscStorage(value: value, exp: exp, key: key, policy: policy, type: .string)
 	}
@@ -172,7 +170,7 @@ public actor GrapeDatabase {
 	///   - exp: expiration date.
 	///   - policy: disk save policy: `.none` `.sync` `.async` .
 	public func setDate(_ value: Date, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
-		let cacheValue = CacheDate(body: value, exp: exp, policy: policy)
+		let cacheValue = CacheDate(body: value, exp: exp)
 		cacheDate[key] = cacheValue
 
 		let string = formatter.string(from: value)
@@ -186,7 +184,7 @@ public actor GrapeDatabase {
 	///   - exp: expiration date.
 	///   - policy: disk save policy: `.none` `.sync` `.async` .
 	public func setInt(_ value: Int, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
-		let cacheValue = CacheInt(body: value, exp: exp, policy: policy)
+		let cacheValue = CacheInt(body: value, exp: exp)
 		cacheInt[key] = cacheValue
 		try await setToDiscStorage(value: String(value), exp: exp, key: key, policy: policy, type: .int)
 	}
@@ -198,7 +196,7 @@ public actor GrapeDatabase {
 	///   - exp: expiration date.
 	///   - policy: disk save policy: `.none` `.sync` `.async` .
 	public func setUUID(_ value: UUID, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
-		let cacheValue = CacheUUID(body: value, exp: exp, policy: policy)
+		let cacheValue = CacheUUID(body: value, exp: exp)
 		cacheUUID[key] = cacheValue
 		try await setToDiscStorage(value: value.uuidString, exp: exp, key: key, policy: policy, type: .uuid)
 	}
@@ -209,11 +207,11 @@ public actor GrapeDatabase {
 			return
 		case .async:
 			Task(priority: .medium) { [weak self] in
-				let diskModel = DiskModel(body: value, exp: exp, key: key, policy: policy, type: .uuid)
+				let diskModel = DiskModel(body: value, exp: exp, key: key, type: .uuid)
 				try await self?.storage?.write(diskModel)
 			}
 		case .sync:
-			let diskModel = DiskModel(body: value, exp: exp, key: key, policy: policy, type: .uuid)
+			let diskModel = DiskModel(body: value, exp: exp, key: key, type: .uuid)
 			try await storage?.write(diskModel)
 		}
 	}

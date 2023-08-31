@@ -13,7 +13,6 @@ public struct DiskModel: Codable {
 	public let body: String
 	public let exp: Date?
 	public let key: String
-	public let policy: SavePolicy
 	public let type: CacheType
 
 	// MARK: - Init
@@ -21,13 +20,11 @@ public struct DiskModel: Codable {
 		body: String,
 		exp: Date? = nil,
 		key: String,
-		policy: SavePolicy,
 		type: CacheType
 	) {
 		self.body = body
 		self.exp = exp
 		self.key = key
-		self.policy = policy
 		self.type = type
 	}
 
@@ -36,7 +33,6 @@ public struct DiskModel: Codable {
 		body = try container.decode(String.self, forKey: .body)
 		exp = try container.decode(Date.self, forKey: .exp)
 		key = try container.decode(String.self, forKey: .key)
-		policy = try container.decode(SavePolicy.self, forKey: .policy)
 		type = try container.decode(CacheType.self, forKey: .type)
 	}
 }

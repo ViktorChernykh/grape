@@ -12,16 +12,13 @@ public struct CacheDate: Codable {
 	// MARK: Stored Properties
 	public let body: Date
 	public let exp: Date?
-	public let policy: SavePolicy
 
 	// MARK: - Init
 	public init(
 		body: Date,
-		exp: Date? = nil,
-		policy: SavePolicy = .none
+		exp: Date? = nil
 	) {
 		self.body = body
 		self.exp = exp
-		self.policy = policy
 	}
 }
