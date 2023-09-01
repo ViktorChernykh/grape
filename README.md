@@ -14,7 +14,7 @@ Grape is a Swift framework that provides a caching mechanism for storing and ret
 - Caches data in memory and on disk.  
 - Supports setting expiration dates for cached items.  
 - Provides options for different save policies (none, async, sync) when storing each data to disk.  
-- Automatically removes expired data from memory and disk storage.  
+- Removes expired data from memory and disk storage.  
 
 ## Getting started
 
@@ -34,7 +34,11 @@ You need to add library to `Package.swift` file:
 
 ### Caching Data  
 
-If you want to use disk storage, first you need to execute the `setupStorage()` method. This will configure the storage and load data from it. 
+If you want to use disk storage, first you need to execute the `setupStorage()` method. This will configure the disk storage and load data from it.  
+`SavePolicy` specifies the save policy for storing data to disk:  
+- `.none` - save data only to memory.  
+- `.async` - asynchronously save data to disk. (In case of an accident, some recent data may be lost.)  
+- `.sync` - synchronously save data to disk. (For critical data.)
 
 ```swift
 import Grape
@@ -42,44 +46,39 @@ import Grape
 let grape = GrapeDatabase.shared
 grape.setupStorage()
 
-struct Model: Codable {
-    value: String
-}
 let key = "greeting"
+// If you set `exp` to nil, the data will not expire
 let exp = Date().addingTimeInterval(3600)
-let savePolicy = SavePolicy.sync
 ```
 To cache data, you can use some methods:  
 Use the `set` method to save any `Codable` object.
 ```swift
+struct Model: Codable {
+    value: String
+}
 let model = Model(value: "Hello, World!")
-try await grape.set(model, for: key, exp: exp, policy: savePolicy)
+try await grape.set(model, for: key, exp: exp, policy: .sync)
 ```
+Use others for fixed types. This improves performance because there is no need to encode the value.  
 
-Use others for fixed types. This improves performance because there is no need to encode the value by about 50 - 100 times.  
-This will cache the value with the "greeting" key with the specified expiration date from the current time and synchronously save it to disk.
 ```swift
 let string = "some string"
-try await grape.setString(string, for: key, exp: exp, policy: savePolicy)
+try await grape.setString(string, for: key, exp: exp, policy: .async)
 let date = Date()
-try await grape.setDate(date, for: key, exp: exp, policy: savePolicy)
+try await grape.setDate(date, for: key, exp: exp, policy: .none)
 let int = 5
-try await grape.setInt(int, for: key, exp: exp, policy: savePolicy)
+try await grape.setInt(int, for: key, exp: exp, policy: .sync)
 let uuid = UUID()
-try await grape.setUUID(uuid, for: key, exp: exp, policy: savePolicy)
-```  
-  
-`savePolicy` specifies the save policy for storing data to disk:  
-- `.none` - save data only to memory.  
-- `.async` - asynchronously save data to disk. (In case of an accident, some recent data may be lost.)  
-- `.sync` - synchronously save data to disk. (For critical data.)
+try await grape.setUUID(uuid, for: key, exp: exp, policy: .async)
+```
+This will cache the value with the specified expiration date.
 
 ### Retrieving Data
 
 To retrieve data from the cache, you can use the some methods:
 
 ```swift
-// For any codable models:
+// For any codable objects:
 let model = try await grape.get(by: "greeting", as: Model.self)
 
 // For fixed types. This improves performance because there is no need to decode the value.
@@ -101,8 +100,11 @@ try await grape.resetDate(key: "greeting")
 try await grape.resetInt(key: "greeting")
 try await grape.resetUUID(key: "greeting")
 ```
-
-This will remove the cached data associated with the key "greeting" from both memory and disk storage.
+This will remove the cached data associated with the key "greeting" from both memory and disk storage.  
+To delete all the data, you can perform the following method:  
+```swift
+try await resetAll()
+```
 
 ### Error Handling
 
@@ -119,7 +121,7 @@ await grape.set(memoryFlushInterval: 86400)	// 1 day
 ```
 -  You can configure the folder name for storing files. Default value: "Cache".
 ```swift
-await grape.setupStorage(cacheFolder: "MyFolder")
+try await grape.setupStorage(cacheFolder: "MyFolder")
 ```
 
 ## Dependencies

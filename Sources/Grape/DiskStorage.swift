@@ -60,7 +60,7 @@ struct DiskStorage: StorageProtocol {
 		let data = try encoder.encode(cacheModel) + "\n".data(using: .utf8)!
 
 		var result = false
-		for _ in 0...24 {
+		for _ in 0...9 {
 			do {
 				let fileHandle = try FileHandle(forWritingTo: fileURL)
 				fileHandle.seekToEndOfFile()
@@ -69,7 +69,7 @@ struct DiskStorage: StorageProtocol {
 				result = true
 				break
 			} catch {
-				try await Task.sleep(nanoseconds: UInt64(5_000_000_000))
+				try await Task.sleep(nanoseconds: UInt64(10_000_000_000))
 			}
 		}
 		if !result {
@@ -157,20 +157,20 @@ struct DiskStorage: StorageProtocol {
 			// restore only the actual data
 			switch item.type {
 			case .date:
-				if let body = formatter.date(from: item.body) {
-					cacheDate[item.key] = CacheDate(body: body, exp: item.exp)
+				if let date = formatter.date(from: item.body) {
+					cacheDate[item.key] = CacheDate(body: date, exp: item.exp)
 				}
 			case .int:
-				if let body = Int(item.body) {
-					cacheInt[item.key] = CacheInt(body: body, exp: item.exp)
+				if let int = Int(item.body) {
+					cacheInt[item.key] = CacheInt(body: int, exp: item.exp)
 				}
 			case .string:
 				cacheString[item.key] = CacheString(body: item.body, exp: item.exp)
 			case .uuid:
-				if let body = UUID(uuidString: item.body) {
-					cacheUUID[item.key] = CacheUUID(body: body, exp: item.exp)
+				if let uuid = UUID(uuidString: item.body) {
+					cacheUUID[item.key] = CacheUUID(body: uuid, exp: item.exp)
 				}
-			default:
+			case .model:
 				cache[item.key] = CacheString(body: item.body, exp: item.exp)
 			}
 		}
