@@ -79,7 +79,7 @@ public actor GrapeDatabase {
 	/// - Parameters:
 	///   - key: unique key for search data.
 	/// - Returns: decoded data or nil if it not found or catch an error.
-	public func getString(by key: String) throws -> CacheString? {
+	public func getString(by key: String) -> CacheString? {
 		guard let model = cacheString[key] else {
 			return nil
 		}
@@ -94,7 +94,7 @@ public actor GrapeDatabase {
 	/// - Parameters:
 	///   - key: unique key for search data.
 	/// - Returns: decoded data or nil if it not found or catch an error.
-	public func getDate(by key: String) throws -> CacheDate? {
+	public func getDate(by key: String) -> CacheDate? {
 		guard let model = cacheDate[key] else {
 			return nil
 		}
@@ -109,7 +109,7 @@ public actor GrapeDatabase {
 	/// - Parameters:
 	///   - key: unique key for search data.
 	/// - Returns: decoded data or nil if it not found or catch an error.
-	public func getInt(by key: String) throws -> CacheInt? {
+	public func getInt(by key: String) -> CacheInt? {
 		guard let model = cacheInt[key] else {
 			return nil
 		}
@@ -124,7 +124,7 @@ public actor GrapeDatabase {
 	/// - Parameters:
 	///   - key: unique key for search data.
 	/// - Returns: decoded data or nil if it not found or catch an error.
-	public func getUUID(by key: String) throws -> CacheUUID? {
+	public func getUUID(by key: String) -> CacheUUID? {
 		guard let model = cacheUUID[key] else {
 			return nil
 		}
