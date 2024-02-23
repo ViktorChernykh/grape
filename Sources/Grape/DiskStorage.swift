@@ -83,6 +83,13 @@ struct DiskStorage: StorageProtocol {
 		var bateBuffer = Data()
 		// Source file
 		let handle = try FileHandle(forUpdating: fileURL)
+		defer {
+			do {
+				try handle.close()
+			} catch {
+				print("Grape error: Cannot close file \(fileURL.absoluteString).")
+			}
+		}
 
 		var i = 0
 		for try await line in handle.bytes.lines {
@@ -107,7 +114,6 @@ struct DiskStorage: StorageProtocol {
 
 		try handle.truncate(atOffset: 0)
 		try handle.write(contentsOf: bateBuffer)
-		try handle.close()
 	}
 
 	/// Clean file.
@@ -135,6 +141,13 @@ struct DiskStorage: StorageProtocol {
 
 		// Source file
 		let handle = try FileHandle(forUpdating: fileURL)
+		defer {
+			do {
+				try handle.close()
+			} catch {
+				print("Grape error: Cannot close file \(fileURL.absoluteString).")
+			}
+		}
 
 		var i = 0
 		for try await line in handle.bytes.lines {
@@ -174,7 +187,6 @@ struct DiskStorage: StorageProtocol {
 				cache[item.key] = CacheString(body: item.body, exp: item.exp)
 			}
 		}
-		try handle.close()
 
 		return (cacheDate, cacheInt, cacheString, cacheUUID, cache)
 	}
@@ -185,6 +197,13 @@ struct DiskStorage: StorageProtocol {
 		var bateBuffer = Data()
 		// Source file
 		let handle = try FileHandle(forUpdating: fileURL)
+		defer {
+			do {
+				try handle.close()
+			} catch {
+				print("Grape error: Cannot close file \(fileURL.absoluteString).")
+			}
+		}
 
 		var i = 0
 		for try await line in handle.bytes.lines {
@@ -209,6 +228,5 @@ struct DiskStorage: StorageProtocol {
 
 		try handle.truncate(atOffset: 0)
 		try handle.write(contentsOf: bateBuffer)
-		try handle.close()
 	}
 }

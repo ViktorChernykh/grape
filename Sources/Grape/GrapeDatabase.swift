@@ -7,6 +7,8 @@
 
 import Foundation
 
+public let grape = GrapeDatabase.shared
+
 public actor GrapeDatabase {
 	// MARK: Stored Properties
 	public static var shared = GrapeDatabase()
