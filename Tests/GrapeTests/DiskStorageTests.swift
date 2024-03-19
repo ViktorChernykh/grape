@@ -8,11 +8,7 @@ class DiskStorageTests: XCTestCase {
 
 	override func setUp() {
 		super.setUp()
-		sut = DiskStorage(
-			folder: "Grape",
-			cacheFolder: "Test",
-			cacheFileName: "data"
-		)
+		sut = DiskStorage(appKey: "Test")
 	}
 
 	override func tearDown() {
@@ -20,11 +16,15 @@ class DiskStorageTests: XCTestCase {
 			.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
 		let url = supportFolderURL!
 			.appendingPathComponent("Grape")
-			.appendingPathComponent("Test")
+			.appendingPathComponent("Cache-Test")
 			.appendingPathComponent("data")
 
 		if FileManager.default.fileExists(atPath: url.path) {
-			try? FileManager.default.removeItem(at: url)
+			do {
+				try FileManager.default.removeItem(at: url)
+			} catch {
+				print(error.localizedDescription)
+			}
 		}
 		super.tearDown()
 	}

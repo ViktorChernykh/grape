@@ -40,8 +40,9 @@ public actor GrapeDatabase {
 
 	// MARK: - Methods
 	/// Load the data from cache file.
-	public func setupStorage(cacheFolder: String = "Cache") async throws {
-		storage = DiskStorage(cacheFolder: cacheFolder)
+	/// - Parameter appKey: App name for unique folder.
+	public func setupStorage(appName: String) async throws {
+		storage = DiskStorage(appKey: appName)
 		if let data = try await storage?.loadCache() {
 			cacheDate = data.0
 			cacheInt = data.1

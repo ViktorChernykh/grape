@@ -14,7 +14,7 @@ class GrapeDatabaseTests: XCTestCase {
 			.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
 		let url = supportFolderURL!
 			.appendingPathComponent("Grape")
-			.appendingPathComponent("Test")
+			.appendingPathComponent("Cache-Test")
 			.appendingPathComponent("data")
 
 		if FileManager.default.fileExists(atPath: url.path) {
@@ -25,7 +25,7 @@ class GrapeDatabaseTests: XCTestCase {
 
 	func test_SetUpGrapeDatabase_WhenSetup_ShouldSetNewProperties() async throws {
 		// Given
-		try await sut.setupStorage(cacheFolder: "Test")
+		try await sut.setupStorage(appName: "Test")
 
 		// When
 		await sut.set(memoryFlushInterval: 8)
@@ -47,7 +47,7 @@ class GrapeDatabaseTests: XCTestCase {
 
 	func test_GetCache_WhenKeyExists_ReturnValue() async throws {
 		// Given
-		try await sut.setupStorage(cacheFolder: "Test")
+		try await sut.setupStorage(appName: "Test")
 		let key = "testKey"
 		let value = TestModel(name: "Name", age: 30)
 		try await sut.set(value, for: key, policy: .sync)
@@ -62,7 +62,7 @@ class GrapeDatabaseTests: XCTestCase {
 
 	func test_GetString_WhenKeyExists_ReturnValue() async throws {
 		// Given
-		try await sut.setupStorage(cacheFolder: "Test")
+		try await sut.setupStorage(appName: "Test")
 		let key = "testKey"
 		let value = "Name"
 		try await sut.setString(value, for: key, policy: .sync)
@@ -76,7 +76,7 @@ class GrapeDatabaseTests: XCTestCase {
 
 	func test_GetCache_WhenKeyNotExists_ReturnNil() async throws {
 		// Given
-		try await sut.setupStorage(cacheFolder: "Test")
+		try await sut.setupStorage(appName: "Test")
 		let key = "testKey"
 		let value = "testValue"
 		try await sut.set(value, for: key)
@@ -90,7 +90,7 @@ class GrapeDatabaseTests: XCTestCase {
 
 	func test_GetCache_WhenCacheExpiration_ReturnNil() async throws {
 		// Given
-		try await sut.setupStorage(cacheFolder: "Test")
+		try await sut.setupStorage(appName: "Test")
 		let key = "testKey"
 		let value = "testValue"
 		let expirationDate = Date(timeIntervalSinceNow: 1)
@@ -109,7 +109,7 @@ class GrapeDatabaseTests: XCTestCase {
 
 	func test_GetCache_WhenCacheReset_ReturnNil() async throws {
 		// Given
-		try await sut.setupStorage(cacheFolder: "Test")
+		try await sut.setupStorage(appName: "Test")
 		let key = "testKey"
 		let value = "testValue"
 
@@ -125,7 +125,7 @@ class GrapeDatabaseTests: XCTestCase {
 
 	func test_RemoveExpiredData_WhenDataHasExpired_CacheMustBeDeleted() async throws {
 		// Given
-		try await sut.setupStorage(cacheFolder: "Test")
+		try await sut.setupStorage(appName: "Test")
 		await sut.set(memoryFlushInterval: 1.5)
 		let key = "testKey"
 		let value = "testValue"
@@ -148,6 +148,7 @@ class GrapeDatabaseTests: XCTestCase {
 	static var allTests = [
 		("test_SetUpGrapeDatabase_WhenSetup_ShouldSetNewProperties", test_SetUpGrapeDatabase_WhenSetup_ShouldSetNewProperties),
 		("test_GetCache_WhenKeyExists_ReturnValue", test_GetCache_WhenKeyExists_ReturnValue),
+		("test_GetString_WhenKeyExists_ReturnValue", test_GetString_WhenKeyExists_ReturnValue),
 		("test_GetCache_WhenKeyNotExists_ReturnNil", test_GetCache_WhenKeyNotExists_ReturnNil),
 		("test_GetCache_WhenCacheExpiration_ReturnNil", test_GetCache_WhenCacheExpiration_ReturnNil),
 		("test_GetCache_WhenCacheReset_ReturnNil", test_GetCache_WhenCacheReset_ReturnNil),

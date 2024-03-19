@@ -9,8 +9,9 @@ import Foundation
 
 /// Class for managing cache storage.
 struct DiskStorage: StorageProtocol {
+
 	// MARK: Stored Properties
-	/// Name for current cache file
+	/// URL for cache file.
 	private let fileURL: URL
 
 	private let decoder = JSONDecoder()
@@ -19,32 +20,35 @@ struct DiskStorage: StorageProtocol {
 
 	// MARK: - Init
 	/// Creates a storage folder either in the support directory or in the home directory. Creates the first file to store.
-	/// - Parameters:
-	///   - folderName: name of folder for storage.
-	///   - pathComponents: path components for add to Support Directory.
-	init(
-		folder folderName: String = "Grape",
-		cacheFolder: String = "Cache",
-		cacheFileName: String = "data"
-	) {
+	init(appKey: String) {
+		let rootFolder = "Grape"
+		let cacheFolder = "Cache-\(appKey)"
+		
+		// Cache folder
 		let folder: URL
+
 		let supportFolderURL = FileManager.default
 			.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+
+		// Build url for cache folder
 		if let supportFolderURL {
 			folder = supportFolderURL
-				.appendingPathComponent(folderName)
+				.appendingPathComponent(rootFolder)
 				.appendingPathComponent(cacheFolder)
 		} else {
-			let supportFolderPath = NSHomeDirectory() + "/.\(folderName)/\(cacheFolder)/"
+			let supportFolderPath = NSHomeDirectory() + "/.\(rootFolder)/\(cacheFolder)/"
 			folder = URL(fileURLWithPath: supportFolderPath)
 		}
+
+		// Create cache folder if it doesn't exist
 		do {
 			try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
 		} catch {
 			fatalError("Grape error: Couldn't create the grape cache directory.")
 		}
 
-		fileURL = folder.appendingPathComponent(cacheFileName)
+		// Create current file
+		fileURL = folder.appendingPathComponent("data")
 		if !FileManager.default.fileExists(atPath: fileURL.path) {
 			if !FileManager.default.createFile(atPath: fileURL.path, contents: nil) {
 				fatalError("Grape error: Couldn't create the grape current cache file.")
@@ -53,7 +57,6 @@ struct DiskStorage: StorageProtocol {
 	}
 
 	// MARK: - Methods
-
 	/// Writes data to end of cache file.
 	/// - Parameter cacheModel: data to save.
 	func write(_ cacheModel: DiskModel) async throws {
