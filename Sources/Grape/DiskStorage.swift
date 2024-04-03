@@ -155,6 +155,9 @@ struct DiskStorage: StorageProtocol {
 		var i = 0
 		for try await line in handle.bytes.lines {
 			i += 1
+			guard !line.isEmpty else {
+				continue
+			}
 			// encode row back to data
 			guard let data = line.data(using: .utf8) else {
 				print("Grape error: incorrect data from \(fileURL) at \(i) line.")
