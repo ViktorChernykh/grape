@@ -5,7 +5,7 @@
 //  Created by Victor Chernykh on 15.08.2022.
 //
 
-import Foundation
+import struct Foundation.Date
 
 /// Model of data for storage in memory.
 public struct CacheInt: Codable {

@@ -11,6 +11,6 @@ extension TestModel {
 		guard let data else {
 			return ""
 		}
-		return String(data: data, encoding: .utf8) ?? ""
+		return String(data: data, encoding: String.Encoding.utf8) ?? ""
 	}
 }

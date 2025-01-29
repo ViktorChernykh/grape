@@ -5,8 +5,6 @@
 //  Created by Victor Chernykh on 14.08.2022.
 //
 
-import Foundation
-
 /// Library's Errors
 enum GrapeError: Error {
 	case couldNotWriteToCacheFile

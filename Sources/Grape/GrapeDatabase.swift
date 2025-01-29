@@ -6,35 +6,36 @@
 //
 
 import Foundation
+import TraderUserDto
 
 public let grape = GrapeDatabase.shared
 
 public actor GrapeDatabase {
 	// MARK: Stored Properties
-	public static var shared = GrapeDatabase()
+	public static var shared: GrapeDatabase = .init()
 
 	/// Cache flush Interval in seconds.
-	public var memoryFlushInterval: Double = 1800
+	public var memoryFlushInterval: TimeInterval = 1800	// seconds, half hour
 
 	/// Disk storage delegate.
 	var storage: StorageProtocol?
 
+	private var cache: [String: CacheString] = [:]
 	private var cacheDate: [String: CacheDate] = [:]
 	private var cacheInt: [String: CacheInt] = [:]
 	private var cacheString: [String: CacheString] = [:]
 	private var cacheUUID: [String: CacheUUID] = [:]
-	private var cache: [String: CacheString] = [:]
+	private var cachePayload: [String: CachePayload] = [:]
 
-	private let decoder = JSONDecoder()
-	private let encoder = JSONEncoder()
-	private let formatter = DateFormatter()
+	private let decoder: JSONDecoder = .init()
+	private let encoder: JSONEncoder = .init()
+	private let formatter: DateFormatter = .init()
+	private var taskFlush: Task<Void, Error>!
 
 	// MARK: - Init
 	private init() {
-		do {
-			try removeExpiredData()
-		} catch {
-			print(error.localizedDescription)
+		Task {
+			await removeExpiredData()
 		}
 	}
 
@@ -56,7 +57,7 @@ public actor GrapeDatabase {
 		self.memoryFlushInterval = memoryFlushInterval
 	}
 
-	// MARK: - Get
+	// MARK: - Get methods
 
 	/// Get data from memory cache.
 	/// - Parameters:
@@ -64,15 +65,15 @@ public actor GrapeDatabase {
 	///   - as: type for decode data.
 	/// - Returns: decoded data or nil if it not found or catch an error.
 	public func get<T: Codable>(by key: String, as: T.Type) throws -> T? {
-		guard let model = cache[key] else {
+		guard let model: CacheString = cache[key] else {
 			return nil
 		}
-		if let exp = model.exp, exp < Date() {
+		if let exp: Date = model.exp, exp < Date() {
 			// The data has expired
 			return nil
 		}
 
-		guard let data = model.body.data(using: .utf8) else {
+		guard let data: Data = model.body.data(using: .utf8) else {
 			return nil
 		}
 		return try decoder.decode(T.self, from: data)
@@ -81,64 +82,79 @@ public actor GrapeDatabase {
 	/// Get string from memory cache.
 	/// - Parameters:
 	///   - key: unique key for search data.
-	/// - Returns: decoded data or nil if it not found or catch an error.
-	public func getString(by key: String) -> CacheString? {
-		guard let model = cacheString[key] else {
+	/// - Returns: String or nil if it not found.
+	public func getString(by key: String) -> String? {
+		guard let model: CacheString = cacheString[key] else {
 			return nil
 		}
-		if let exp = model.exp, exp < Date() {
+		if let exp: Date = model.exp, exp < Date() {
 			// The data has expired
 			return nil
 		}
-		return model
+		return model.body
 	}
 
 	/// Get date from memory cache.
 	/// - Parameters:
 	///   - key: unique key for search data.
-	/// - Returns: decoded data or nil if it not found or catch an error.
-	public func getDate(by key: String) -> CacheDate? {
-		guard let model = cacheDate[key] else {
+	/// - Returns: Date or nil if it not found.
+	public func getDate(by key: String) -> Date? {
+		guard let model: CacheDate = cacheDate[key] else {
 			return nil
 		}
-		if let exp = model.exp, exp < Date() {
+		if let exp: Date = model.exp, exp < Date() {
 			// The data has expired
 			return nil
 		}
-		return model
+		return model.body
 	}
 
 	/// Get integer from memory cache.
 	/// - Parameters:
 	///   - key: unique key for search data.
-	/// - Returns: decoded data or nil if it not found or catch an error.
-	public func getInt(by key: String) -> CacheInt? {
-		guard let model = cacheInt[key] else {
+	/// - Returns: Int or nil if it not found.
+	public func getInt(by key: String) -> Int? {
+		guard let model: CacheInt = cacheInt[key] else {
 			return nil
 		}
-		if let exp = model.exp, exp < Date() {
+		if let exp: Date = model.exp, exp < Date() {
 			// The data has expired
 			return nil
 		}
-		return model
+		return model.body
 	}
 
 	/// Get uuid from memory cache.
 	/// - Parameters:
 	///   - key: unique key for search data.
-	/// - Returns: decoded data or nil if it not found or catch an error.
-	public func getUUID(by key: String) -> CacheUUID? {
-		guard let model = cacheUUID[key] else {
+	/// - Returns: UUID or nil if it not found.
+	public func getUUID(by key: String) -> UUID? {
+		guard let model: CacheUUID = cacheUUID[key] else {
 			return nil
 		}
-		if let exp = model.exp, exp < Date() {
+		if let exp: Date = model.exp, exp < Date() {
 			// The data has expired
 			return nil
 		}
-		return model
+		return model.body
 	}
 
-	// MARK: - Set
+	/// Get UserPayload from memory cache.
+	/// - Parameters:
+	///   - key: unique key for search data.
+	/// - Returns: UserPayload or nil if it not found.
+	public func getPayload(by key: String) -> UserPayload? {
+		guard let model: CachePayload = cachePayload[key] else {
+			return nil
+		}
+		if let exp: Date = model.exp, exp < Date() {
+			// The data has expired
+			return nil
+		}
+		return model.body
+	}
+
+	// MARK: - Set methods
 
 	/// Store an object to memory cache and to disk.
 	/// - Parameters:
@@ -147,9 +163,9 @@ public actor GrapeDatabase {
 	///   - exp: expiration date.
 	///   - policy: disk save policy: `.none` `.sync` `.async` .
 	public func set<T: Codable>(_ model: T, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
-		let data = try encoder.encode(model)
-		let string = String(data: data, encoding: .utf8) ?? ""
-		let cacheValue = CacheString(body: string, exp: exp)
+		let data: Data = try encoder.encode(model)
+		let string: String = .init(data: data, encoding: String.Encoding.utf8) ?? ""
+		let cacheValue: CacheString = .init(body: string, exp: exp)
 		cache[key] = cacheValue
 		try await setToDiscStorage(value: string, exp: exp, key: key, policy: policy, type: .model)
 	}
@@ -161,7 +177,7 @@ public actor GrapeDatabase {
 	///   - exp: expiration date.
 	///   - policy: disk save policy: `.none` `.sync` `.async` .
 	public func setString(_ value: String, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
-		let cacheValue = CacheString(body: value, exp: exp)
+		let cacheValue: CacheString = .init(body: value, exp: exp)
 		cacheString[key] = cacheValue
 		try await setToDiscStorage(value: value, exp: exp, key: key, policy: policy, type: .string)
 	}
@@ -173,7 +189,7 @@ public actor GrapeDatabase {
 	///   - exp: expiration date.
 	///   - policy: disk save policy: `.none` `.sync` `.async` .
 	public func setDate(_ value: Date, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
-		let cacheValue = CacheDate(body: value, exp: exp)
+		let cacheValue: CacheDate = .init(body: value, exp: exp)
 		cacheDate[key] = cacheValue
 
 		let string = formatter.string(from: value)
@@ -187,7 +203,7 @@ public actor GrapeDatabase {
 	///   - exp: expiration date.
 	///   - policy: disk save policy: `.none` `.sync` `.async` .
 	public func setInt(_ value: Int, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
-		let cacheValue = CacheInt(body: value, exp: exp)
+		let cacheValue: CacheInt = .init(body: value, exp: exp)
 		cacheInt[key] = cacheValue
 		try await setToDiscStorage(value: String(value), exp: exp, key: key, policy: policy, type: .int)
 	}
@@ -199,9 +215,19 @@ public actor GrapeDatabase {
 	///   - exp: expiration date.
 	///   - policy: disk save policy: `.none` `.sync` `.async` .
 	public func setUUID(_ value: UUID, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
-		let cacheValue = CacheUUID(body: value, exp: exp)
+		let cacheValue: CacheUUID = .init(body: value, exp: exp)
 		cacheUUID[key] = cacheValue
 		try await setToDiscStorage(value: value.uuidString, exp: exp, key: key, policy: policy, type: .uuid)
+	}
+
+	/// Store an UserPayload to memory cache and to disk.
+	/// - Parameters:
+	///   - value: UserPayload for save.
+	///   - key: unique key for search data.
+	///   - exp: expiration date.
+	public func setPayload(_ value: UserPayload, for key: String, exp: Date? = nil) {
+		let cacheValue: CachePayload = .init(body: value, exp: exp)
+		cachePayload[key] = cacheValue
 	}
 
 	private func setToDiscStorage(value: String, exp: Date?, key: String, policy: SavePolicy, type: CacheType) async throws {
@@ -210,7 +236,7 @@ public actor GrapeDatabase {
 			return
 		case .async:
 			Task(priority: .medium) { [weak self] in
-				let diskModel = DiskModel(body: value, exp: exp, key: key, type: .uuid)
+				let diskModel: DiskModel = .init(body: value, exp: exp, key: key, type: .uuid)
 				try await self?.storage?.write(diskModel)
 			}
 		case .sync:
@@ -219,7 +245,7 @@ public actor GrapeDatabase {
 		}
 	}
 
-	// MARK: - Reset
+	// MARK: - Reset methods
 
 	/// Deletes a data from the cache by key.
 	/// - Parameters:
@@ -266,6 +292,13 @@ public actor GrapeDatabase {
 		try await resetFromDiscStorage(key, policy)
 	}
 
+	/// Deletes a UserPayload from the cache by key.
+	/// - Parameter key: unique key for data.
+	public func resetPayload(key: String) async throws {
+		cachePayload.removeValue(forKey: key)
+		try await resetFromDiscStorage(key, .none)
+	}
+
 	/// Deletes all data from the cache.
 	public func resetAll() throws {
 		cacheDate = [:]
@@ -273,6 +306,7 @@ public actor GrapeDatabase {
 		cacheString = [:]
 		cacheUUID = [:]
 		cache = [:]
+		cachePayload = [:]
 
 		try storage?.removeAll()
 	}
@@ -290,42 +324,46 @@ public actor GrapeDatabase {
 		}
 	}
 
-	// MARK: - Remove
+	// MARK: - Remove methods
 
 	/// Deletes all expired keys.
 	private func removeExpiredMemoryCache() {
-		let date = Date()
+		let date: Date = .init()
 		for (key, model) in cacheDate {
-			if let exp = model.exp, exp < date {
+			if let exp: Date = model.exp, exp < date {
 				cache.removeValue(forKey: key)
 			}
 		}
 		for (key, model) in cacheInt {
-			if let exp = model.exp, exp < date {
+			if let exp: Date = model.exp, exp < date {
 				cache.removeValue(forKey: key)
 			}
 		}
 		for (key, model) in cacheString {
-			if let exp = model.exp, exp < date {
+			if let exp: Date = model.exp, exp < date {
 				cache.removeValue(forKey: key)
 			}
 		}
 		for (key, model) in cacheUUID {
-			if let exp = model.exp, exp < date {
+			if let exp: Date = model.exp, exp < date {
 				cache.removeValue(forKey: key)
 			}
 		}
 		for (key, model) in cache {
-			if let exp = model.exp, exp < date {
+			if let exp: Date = model.exp, exp < date {
+				cache.removeValue(forKey: key)
+			}
+		}
+		for (key, model) in cachePayload {
+			if let exp: Date = model.exp, exp < date {
 				cache.removeValue(forKey: key)
 			}
 		}
 	}
 
 	/// Deletes all expired keys.
-	nonisolated
-	private func removeExpiredData() throws {
-		Task(priority: .background) { [weak self] in
+	private func removeExpiredData() async {
+		taskFlush = Task(priority: .background) { [weak self] in
 			guard let self else { return }
 			while true {
 				try await self.storage?.reduceDataFile()
@@ -335,5 +373,9 @@ public actor GrapeDatabase {
 				try await Task.sleep(nanoseconds: UInt64(self.memoryFlushInterval * 1_000_000_000))
 			}
 		}
+	}
+
+	deinit {
+		taskFlush.cancel()
 	}
 }

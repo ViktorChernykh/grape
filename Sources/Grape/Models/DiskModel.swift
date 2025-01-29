@@ -5,7 +5,7 @@
 //  Created by Victor Chernykh on 15.08.2022.
 //
 
-import Foundation
+import struct Foundation.Date
 
 /// Model for storing to local file.
 public struct DiskModel: Codable {

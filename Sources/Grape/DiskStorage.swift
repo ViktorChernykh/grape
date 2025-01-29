@@ -14,20 +14,20 @@ struct DiskStorage: StorageProtocol {
 	/// URL for cache file.
 	private let fileURL: URL
 
-	private let decoder = JSONDecoder()
-	private let encoder = JSONEncoder()
-	private let formatter = DateFormatter()
+	private let decoder: JSONDecoder = .init()
+	private let encoder: JSONEncoder = .init()
+	private let formatter: DateFormatter = .init()
 
 	// MARK: - Init
 	/// Creates a storage folder either in the support directory or in the home directory. Creates the first file to store.
 	init(appKey: String) {
-		let rootFolder = "Grape"
-		let cacheFolder = "Cache-\(appKey)"
-		
+		let rootFolder: String = "Grape"
+		let cacheFolder: String = "Cache-\(appKey)"
+
 		// Cache folder
 		let folder: URL
 
-		let supportFolderURL = FileManager.default
+		let supportFolderURL: URL? = FileManager.default
 			.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
 
 		// Build url for cache folder
@@ -36,7 +36,7 @@ struct DiskStorage: StorageProtocol {
 				.appendingPathComponent(rootFolder)
 				.appendingPathComponent(cacheFolder)
 		} else {
-			let supportFolderPath = NSHomeDirectory() + "/.\(rootFolder)/\(cacheFolder)/"
+			let supportFolderPath: String = NSHomeDirectory() + "/.\(rootFolder)/\(cacheFolder)/"
 			folder = URL(fileURLWithPath: supportFolderPath)
 		}
 
@@ -60,12 +60,12 @@ struct DiskStorage: StorageProtocol {
 	/// Writes data to end of cache file.
 	/// - Parameter cacheModel: data to save.
 	func write(_ cacheModel: DiskModel) async throws {
-		let data = try encoder.encode(cacheModel) + "\n".data(using: .utf8)!
+		let data: Data = try encoder.encode(cacheModel) + "\n".data(using: String.Encoding.utf8)!
 
-		var result = false
+		var result: Bool = false
 		for _ in 0...9 {
 			do {
-				let fileHandle = try FileHandle(forWritingTo: fileURL)
+				let fileHandle: FileHandle = try .init(forWritingTo: fileURL)
 				fileHandle.seekToEndOfFile()
 				try fileHandle.write(contentsOf: data)
 				try fileHandle.close()
@@ -83,9 +83,9 @@ struct DiskStorage: StorageProtocol {
 	/// Deletes the value from the file by the specified key.
 	/// - Parameter key: key for cache value.
 	func removeValue(forKey key: String) async throws {
-		var bateBuffer = Data()
+		var bateBuffer: Data = .init()
 		// Source file
-		let handle = try FileHandle(forUpdating: fileURL)
+		let handle: FileHandle = try .init(forUpdating: fileURL)
 		defer {
 			do {
 				try handle.close()
@@ -94,16 +94,16 @@ struct DiskStorage: StorageProtocol {
 			}
 		}
 
-		var i = 0
+		var i: Int = 0
 		for try await line in handle.bytes.lines {
 			i += 1
 			// encode row back to data
-			guard let data = line.data(using: .utf8) else {
+			guard let data: Data = line.data(using: String.Encoding.utf8) else {
 				print("Grape error: incorrect data from \(fileURL) at \(i) line.")
 				continue
 			}
 			// decode expire date
-			guard let item = try? decoder.decode(DiskModel.self, from: data) else {
+			guard let item: DiskModel = try? decoder.decode(DiskModel.self, from: data) else {
 				print("Grape error: incorrect data from \(fileURL) at \(i) line.")
 				continue
 			}
@@ -122,7 +122,7 @@ struct DiskStorage: StorageProtocol {
 	/// Clean file.
 	func removeAll() throws {
 		// Source file
-		let handle = try FileHandle(forUpdating: fileURL)
+		let handle: FileHandle = try .init(forUpdating: fileURL)
 		try handle.truncate(atOffset: 0)
 		try handle.close()
 	}
@@ -143,7 +143,7 @@ struct DiskStorage: StorageProtocol {
 		var cache: [String: CacheString] = [:]
 
 		// Source file
-		let handle = try FileHandle(forUpdating: fileURL)
+		let handle: FileHandle = try .init(forUpdating: fileURL)
 		defer {
 			do {
 				try handle.close()
@@ -152,41 +152,41 @@ struct DiskStorage: StorageProtocol {
 			}
 		}
 
-		var i = 0
+		var i: Int = 0
 		for try await line in handle.bytes.lines {
 			i += 1
 			guard !line.isEmpty else {
 				continue
 			}
 			// encode row back to data
-			guard let data = line.data(using: .utf8) else {
+			guard let data: Data = line.data(using: String.Encoding.utf8) else {
 				print("Grape error: incorrect data from \(fileURL) at \(i) line.")
 				continue
 			}
 			// decode disk data
-			guard let item = try? decoder.decode(DiskModel.self, from: data) else {
+			guard let item: DiskModel = try? decoder.decode(DiskModel.self, from: data) else {
 				print("Grape error: incorrect data from \(fileURL) at \(i) line.")
 				continue
 			}
 			// skip expired data
-			if let exp = item.exp, exp < Date() {
+			if let exp: Date = item.exp, exp < Date() {
 				continue
 			}
 
 			// restore only the actual data
 			switch item.type {
 			case .date:
-				if let date = formatter.date(from: item.body) {
+				if let date: Date = formatter.date(from: item.body) {
 					cacheDate[item.key] = CacheDate(body: date, exp: item.exp)
 				}
 			case .int:
-				if let int = Int(item.body) {
+				if let int: Int = .init(item.body) {
 					cacheInt[item.key] = CacheInt(body: int, exp: item.exp)
 				}
 			case .string:
 				cacheString[item.key] = CacheString(body: item.body, exp: item.exp)
 			case .uuid:
-				if let uuid = UUID(uuidString: item.body) {
+				if let uuid: UUID = .init(uuidString: item.body) {
 					cacheUUID[item.key] = CacheUUID(body: uuid, exp: item.exp)
 				}
 			case .model:
@@ -200,9 +200,9 @@ struct DiskStorage: StorageProtocol {
 	/// Removes obsolete data.
 	/// - Throws: if something went wrong.
 	func reduceDataFile() async throws {
-		var bateBuffer = Data()
+		var bateBuffer: Data = .init()
 		// Source file
-		let handle = try FileHandle(forUpdating: fileURL)
+		let handle: FileHandle = try .init(forUpdating: fileURL)
 		defer {
 			do {
 				try handle.close()
@@ -215,17 +215,17 @@ struct DiskStorage: StorageProtocol {
 		for try await line in handle.bytes.lines {
 			i += 1
 			// encode row back to data
-			guard let data = line.data(using: .utf8) else {
+			guard let data: Data = line.data(using: String.Encoding.utf8) else {
 				print("Grape error: incorrect data from \(fileURL) at \(i) line.")
 				continue
 			}
 			// decode expire date
-			guard let item = try? decoder.decode(ExpireModel.self, from: data) else {
+			guard let item: ExpireModel = try? decoder.decode(ExpireModel.self, from: data) else {
 				print("Grape error: incorrect data from \(fileURL) at \(i) line.")
 				continue
 			}
 			// skip expired data
-			if let exp = item.exp, exp < Date() {
+			if let exp: Date = item.exp, exp < Date() {
 				continue
 			}
 			// restore only the actual data

@@ -1,22 +1,22 @@
 //
-//  CacheDate.swift
-//  Grape
+//  CachePayload.swift
 //
-//  Created by Victor Chernykh on 15.08.2022.
+//
+//  Created by Victor Chernykh on 10.04.2024.
 //
 
-import struct Foundation.Data
 import struct Foundation.Date
+import TraderUserDto
 
 /// Model of data for storage in memory.
-public struct CacheDate: Codable {
+public struct CachePayload: Codable {
 	// MARK: Stored Properties
-	public let body: Date
+	public let body: UserPayload
 	public let exp: Date?
 
 	// MARK: - Init
 	public init(
-		body: Date,
+		body: UserPayload,
 		exp: Date? = nil
 	) {
 		self.body = body

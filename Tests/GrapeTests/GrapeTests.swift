@@ -68,10 +68,10 @@ class GrapeDatabaseTests: XCTestCase {
 		try await sut.setString(value, for: key, policy: .sync)
 
 		// When
-		let cache = await sut.getString(by: key)
+		let cache: String? = await sut.getString(by: key)
 
 		// Then
-		XCTAssertEqual(cache?.body, value, "Retrieved name should match the original name")
+		XCTAssertEqual(cache ?? "", value, "Retrieved name should match the original name")
 	}
 
 	func test_GetCache_WhenKeyNotExists_ReturnNil() async throws {

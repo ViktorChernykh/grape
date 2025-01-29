@@ -5,7 +5,8 @@
 //  Created by Victor Chernykh on 15.08.2022.
 //
 
-import Foundation
+import struct Foundation.Date
+import struct Foundation.UUID
 
 /// Model of data for storage in memory.
 public struct CacheUUID: Codable {
