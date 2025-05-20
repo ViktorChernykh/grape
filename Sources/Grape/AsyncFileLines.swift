@@ -31,14 +31,14 @@ public struct AsyncFileLines: AsyncSequence {
 		/// "\n" in UTF-8.
 		private static let newline = Data([0x0A])
 
-		// MARK: Stored properties
+		// MARK: - Stored properties
 
-		private let handle: FileHandle               // File descriptor owner
-		private let chunkSize: Int                   // Read buffer size
-		private let encoding: String.Encoding        // Text encoding
-		private var buffer = Data()                  // Accumulated bytes between reads
+		private let handle: FileHandle				// File descriptor owner
+		private let chunkSize: Int					// Read buffer size
+		private let encoding: String.Encoding		// Text encoding
+		private var buffer: Data = .init()			// Accumulated bytes between reads
 
-		// MARK: Init
+		// MARK: - Init
 
 		init(
 			fileURL url: URL,
@@ -50,7 +50,7 @@ public struct AsyncFileLines: AsyncSequence {
 			self.encoding = encoding
 		}
 
-		// MARK: AsyncIteratorProtocol
+		// MARK: - AsyncIteratorProtocol
 
 		public func next() async throws -> String? {
 			// Look for “\n” in the buffered data; if found — emit a line.
@@ -75,17 +75,16 @@ public struct AsyncFileLines: AsyncSequence {
 		deinit {
 			// Close FD at end-of-file
 			try? handle.close()
-			buffer.removeAll()
 		}
 	}
 
-	// MARK: Stored properties
+	// MARK: - Stored properties
 
 	private let url: URL
 	private let chunkSize: Int
 	private let encoding: String.Encoding
 
-	// MARK: Init
+	// MARK: - Init
 
 	/// - Parameters:
 	///   - url: Path to the text file.
@@ -101,7 +100,7 @@ public struct AsyncFileLines: AsyncSequence {
 		self.encoding = encoding
 	}
 
-	// MARK: AsyncSequence
+	// MARK: - AsyncSequence
 
 	public func makeAsyncIterator() -> AsyncIterator {
 		// Fatal error here is acceptable: construction already throws above.
