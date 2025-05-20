@@ -84,18 +84,9 @@ struct DiskStorage: StorageProtocol {
 	/// - Parameter key: key for cache value.
 	func removeValue(forKey key: String) async throws {
 		var bateBuffer: Data = .init()
-		// Source file
-		let handle: FileHandle = try .init(forUpdating: fileURL)
-		defer {
-			do {
-				try handle.close()
-			} catch {
-				print("Grape error: Cannot close file \(fileURL.absoluteString).")
-			}
-		}
 
 		var i: Int = 0
-		for try await line in handle.bytes.lines {
+		for try await line in AsyncFileLines(url: fileURL) {
 			i += 1
 			// encode row back to data
 			guard let data: Data = line.data(using: String.Encoding.utf8) else {
@@ -113,6 +104,16 @@ struct DiskStorage: StorageProtocol {
 			}
 			// restore only the actual data
 			bateBuffer.append(data)
+		}
+
+		// Source file
+		let handle: FileHandle = try .init(forUpdating: fileURL)
+		defer {
+			do {
+				try handle.close()
+			} catch {
+				print("Grape error: Cannot close file \(fileURL.absoluteString).")
+			}
 		}
 
 		try handle.truncate(atOffset: 0)
@@ -142,18 +143,8 @@ struct DiskStorage: StorageProtocol {
 		var cacheUUID: [String: CacheUUID] = [:]
 		var cache: [String: CacheString] = [:]
 
-		// Source file
-		let handle: FileHandle = try .init(forUpdating: fileURL)
-		defer {
-			do {
-				try handle.close()
-			} catch {
-				print("Grape error: Cannot close file \(fileURL.absoluteString).")
-			}
-		}
-
 		var i: Int = 0
-		for try await line in handle.bytes.lines {
+		for try await line in AsyncFileLines(url: fileURL) {
 			i += 1
 			guard !line.isEmpty else {
 				continue
@@ -201,18 +192,9 @@ struct DiskStorage: StorageProtocol {
 	/// - Throws: if something went wrong.
 	func reduceDataFile() async throws {
 		var bateBuffer: Data = .init()
-		// Source file
-		let handle: FileHandle = try .init(forUpdating: fileURL)
-		defer {
-			do {
-				try handle.close()
-			} catch {
-				print("Grape error: Cannot close file \(fileURL.absoluteString).")
-			}
-		}
 
 		var i = 0
-		for try await line in handle.bytes.lines {
+		for try await line in AsyncFileLines(url: fileURL) {
 			i += 1
 			// encode row back to data
 			guard let data: Data = line.data(using: String.Encoding.utf8) else {
@@ -230,6 +212,16 @@ struct DiskStorage: StorageProtocol {
 			}
 			// restore only the actual data
 			bateBuffer.append(data)
+		}
+
+		// Source file
+		let handle: FileHandle = try .init(forUpdating: fileURL)
+		defer {
+			do {
+				try handle.close()
+			} catch {
+				print("Grape error: Cannot close file \(fileURL.absoluteString).")
+			}
 		}
 
 		try handle.truncate(atOffset: 0)
