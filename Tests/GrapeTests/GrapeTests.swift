@@ -1,7 +1,7 @@
 import XCTest
 @testable import Grape
 
-class GrapeDatabaseTests: XCTestCase {
+final class GrapeDatabaseTests: XCTestCase {
 	var sut: GrapeDatabase!
 
 	override func setUp() {
@@ -12,6 +12,7 @@ class GrapeDatabaseTests: XCTestCase {
 	override func tearDownWithError() throws {
 		let supportFolderURL = FileManager.default
 			.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+
 		let url = supportFolderURL!
 			.appendingPathComponent("Grape")
 			.appendingPathComponent("Cache-Test")
@@ -30,8 +31,8 @@ class GrapeDatabaseTests: XCTestCase {
 		// When
 		await sut.set(memoryFlushInterval: 8)
 
-		let memoryFlushInterval1 = await sut.memoryFlushInterval
-		let isDiskStorage = await sut.storage is DiskStorage
+		let memoryFlushInterval1 = sut.memoryFlushInterval
+		let isDiskStorage = sut.storage is DiskStorage
 
 		// Then
 		XCTAssertEqual(memoryFlushInterval1, 8, "Memory flush interval1 should match 8")
@@ -39,7 +40,7 @@ class GrapeDatabaseTests: XCTestCase {
 
 		// When 2
 		await sut.set(memoryFlushInterval: 10)
-		let memoryFlushInterval2 = await sut.memoryFlushInterval
+		let memoryFlushInterval2 = sut.memoryFlushInterval
 
 		// Then 2
 		XCTAssertEqual(memoryFlushInterval2, 10, "Memory flush interval1 should match 10")
@@ -53,7 +54,7 @@ class GrapeDatabaseTests: XCTestCase {
 		try await sut.set(value, for: key, policy: .sync)
 
 		// When
-		let model = try await sut.get(by: key, as: TestModel.self)
+		let model = try sut.get(for: key, as: TestModel.self)
 
 		// Then
 		XCTAssertEqual(model?.name, value.name, "Retrieved name should match the original name")
@@ -68,7 +69,7 @@ class GrapeDatabaseTests: XCTestCase {
 		try await sut.setString(value, for: key, policy: .sync)
 
 		// When
-		let cache: String? = await sut.getString(by: key)
+		let cache: String? = sut.getString(for: key)
 
 		// Then
 		XCTAssertEqual(cache ?? "", value, "Retrieved name should match the original name")
@@ -82,7 +83,7 @@ class GrapeDatabaseTests: XCTestCase {
 		try await sut.set(value, for: key)
 
 		// When
-		let retrievedValue = try await sut.get(by: key + "1", as: String.self)
+		let retrievedValue = try sut.get(for: key + "1", as: String.self)
 
 		// Then
 		XCTAssertNil(retrievedValue, "Retrieved value should match the nil")
@@ -97,13 +98,13 @@ class GrapeDatabaseTests: XCTestCase {
 
 		// When
 		try await sut.set(value, for: key, exp: expirationDate)
-		let retrievedValue = try await sut.get(by: key, as: String.self)
+		let retrievedValue = try sut.get(for: key, as: String.self)
 
 		// Then
 		XCTAssertEqual(retrievedValue, value, "Retrieved value should match the original value before expiration")
 
 		sleep(2) // Sleep for 2 seconds to wait for the expiration
-		let expiredValue = try await sut.get(by: key, as: String.self)
+		let expiredValue = try sut.get(for: key, as: String.self)
 		XCTAssertNil(expiredValue, "Retrieved value should be nil after expiration")
 	}
 
@@ -115,9 +116,9 @@ class GrapeDatabaseTests: XCTestCase {
 
 		// When
 		try await sut.set(value, for: key)
-		try await sut.reset(key: key)
+		try await sut.reset(for: key)
 
-		let retrievedValue = try await sut.get(by: key, as: String.self)
+		let retrievedValue = try sut.get(for: key, as: String.self)
 
 		// Then
 		XCTAssertNil(retrievedValue, "Retrieved value should be nil after resetting the cache")
@@ -134,14 +135,14 @@ class GrapeDatabaseTests: XCTestCase {
 		// When
 		try await sut.set(value, for: key, exp: expirationDate)
 
-		let retrievedValue1 = try await sut.get(by: key, as: String.self)
+		let retrievedValue1 = try sut.get(for: key, as: String.self)
 
 		// Then
 		XCTAssertEqual(retrievedValue1, value, "Retrieved value should match the original value before flushing cache")
 
 		// Sleep for the memory flush interval to trigger cache removal
 		sleep(2)
-		let retrievedValue2 = try await sut.get(by: key, as: String.self)
+		let retrievedValue2 = try sut.get(for: key, as: String.self)
 		XCTAssertNil(retrievedValue2, "Retrieved value should be nil after flushing cache")
 	}
 

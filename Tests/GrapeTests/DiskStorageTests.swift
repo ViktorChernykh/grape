@@ -1,7 +1,7 @@
 import XCTest
 @testable import Grape
 
-class DiskStorageTests: XCTestCase {
+final class DiskStorageTests: XCTestCase {
 	var sut: DiskStorage!
 	let decoder = JSONDecoder()
 	let encoder = JSONEncoder()
@@ -31,18 +31,18 @@ class DiskStorageTests: XCTestCase {
 
 	func test_LoadCache_WhenCacheExists_ReturnCachedModel() async throws {
 		// Given
-		let key = "testKey"
-		let exp = Date(timeIntervalSinceNow: 600)
-		let model = TestModel(name: "Victor", age: 20)
-		let string = model.toJson()
-		let value = DiskModel(body: string, exp: exp, key: key, type: .model)
+		let key: String = "testKey"
+		let exp: Date = .init(timeIntervalSinceNow: 600)
+		let model: TestModel = .init(name: "Victor", age: 20)
+		let string: String = model.toJson()
+		let value: DiskModel = .init(body: string, exp: exp, key: key, type: .model)
 
 		// When
 		try await sut.write(value)
-		let cache = try await sut.loadCache().4
-		let cachedModel = cache[key]
-		let data = cachedModel?.body.data(using: .utf8) ?? Data()
-		let retrievedModel = try decoder.decode(TestModel.self, from: data)
+		let cache: [String : CacheString] = try await sut.loadCache().4
+		let cachedModel: CacheString? = cache[key]
+		let data: Data = cachedModel?.body.data(using: .utf8) ?? Data()
+		let retrievedModel: TestModel = try decoder.decode(TestModel.self, from: data)
 
 		// Then
 		XCTAssertNotNil(cachedModel)
@@ -53,17 +53,17 @@ class DiskStorageTests: XCTestCase {
 
 	func test_LoadCache_WhenRemoveCache_ReturnNil() async throws {
 		// Given
-		let model = TestModel(name: "Victor", age: 20)
-		let key = "testKey"
-		let exp = Date(timeIntervalSinceNow: 60)
-		let string = model.toJson()
-		let value = DiskModel(body: string, exp: exp, key: key, type: .model)
+		let model: TestModel = .init(name: "Victor", age: 20)
+		let key: String = "testKey"
+		let exp: Date = .init(timeIntervalSinceNow: 60)
+		let string: String = model.toJson()
+		let value: DiskModel = .init(body: string, exp: exp, key: key, type: .model)
 		try await sut.write(value)
 
 		// When
 		try await sut.removeValue(forKey: key)
-		let cache = try await sut.loadCache().4
-		let cachedModel = cache[key]
+		let cache: [String : CacheString] = try await sut.loadCache().4
+		let cachedModel: CacheString? = cache[key]
 
 		// Then
 		XCTAssertNil(cachedModel)
@@ -71,26 +71,26 @@ class DiskStorageTests: XCTestCase {
 
 	func test_CacheWithExpiredData_WhenReduceDataFile_ReturnOnlyUnexpiredData() async throws {
 		// Given
-		let model1 = TestModel(name: "Victor", age: 20)
-		let key1 = "TestKey1"
-		let exp1 = Date(timeIntervalSinceNow: 60) // Expires in 60 seconds
-		let string1 = model1.toJson()
-		let value1 = DiskModel(body: string1, exp: exp1, key: key1, type: .model)
+		let model1: TestModel = .init(name: "Victor", age: 20)
+		let key1: String = "TestKey1"
+		let exp1: Date = .init(timeIntervalSinceNow: 60) // Expires in 60 seconds
+		let string1: String = model1.toJson()
+		let value1: DiskModel = .init(body: string1, exp: exp1, key: key1, type: .model)
 
-		let model2 = TestModel(name: "Mike", age: 30)
-		let key2 = "TestKey2"
-		let exp2 = Date(timeIntervalSinceNow: -60) // Expired 60 seconds ago
-		let string2 = model2.toJson()
-		let value2 = DiskModel(body: string2, exp: exp2, key: key2, type: .model)
+		let model2: TestModel = .init(name: "Mike", age: 30)
+		let key2: String = "TestKey2"
+		let exp2: Date = .init(timeIntervalSinceNow: -60) // Expired 60 seconds ago
+		let string2: String = model2.toJson()
+		let value2: DiskModel = .init(body: string2, exp: exp2, key: key2, type: .model)
 
 		// When
 		try await sut.write(value1)
 		try await sut.write(value2)
 		try await sut.reduceDataFile()
 
-		let loadedCache = try await sut.loadCache().4
-		let cachedModel1 = loadedCache[key1]
-		let cachedModel2 = loadedCache[key2]
+		let loadedCache: [String : CacheString] = try await sut.loadCache().4
+		let cachedModel1: CacheString? = loadedCache[key1]
+		let cachedModel2: CacheString? = loadedCache[key2]
 
 		// Then
 		XCTAssertNotNil(cachedModel1)
