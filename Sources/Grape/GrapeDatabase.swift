@@ -8,27 +8,28 @@
 import Foundation
 import TraderUserDto
 
-public let grape = GrapeDatabase.shared
+public let grape: GrapeDatabase = .shared
 
-public final class GrapeDatabase {
+public final class GrapeDatabase: Sendable {
 	// MARK: Stored Properties
-	public static let shared: GrapeDatabase = .init()
-
-	/// Cache flush Interval in seconds.
-	public var memoryFlushInterval: TimeInterval = 1800	// seconds, half hour
-
-	/// Disk storage delegate.
-	var storage: StorageProtocol?
-
+	static let shared: GrapeDatabase = .init()
+	
 	private let storeDate: StoreDate = .init()
 	private let storeInt: StoreInt = .init()
 	private let storeModel: StoreString = .init()
 	private let storePayload: StoreUserPayload = .init()
 	private let storeString: StoreString = .init()
 	private let storeUUID: StoreUUID = .init()
+	private let storeTimeInterval: StoreTimeInterval = .init()
 
 	private let decoder: JSONDecoder = .init()
 	private let encoder: JSONEncoder = .init()
+
+	/// Disk storage delegate.
+	nonisolated(unsafe)
+	private var storage: (any StorageProtocol)?
+
+	nonisolated(unsafe)
 	private var taskFlush: Task<Void, Error>!
 
 	// MARK: - Init
@@ -38,6 +39,9 @@ public final class GrapeDatabase {
 	/// Load the data from cache file.
 	/// - Parameter appName: App name for unique folder.
 	public func setupStorage(appName: String) async throws {
+		guard storage == nil else {
+			return
+		}
 		storage = DiskStorage(appKey: appName)
 		if let data = try await storage?.loadCache() {
 			storeDate.setInit(data.0)
@@ -49,8 +53,12 @@ public final class GrapeDatabase {
 		runTaskRemoveExpiredData()
 	}
 
-	public func set(memoryFlushInterval: Double) async {
-		self.memoryFlushInterval = memoryFlushInterval
+	public func getMemoryFlushInterval() -> TimeInterval {
+		storeTimeInterval.get()
+	}
+
+	public func set(memoryFlushInterval: Double) {
+		storeTimeInterval.set(memoryFlushInterval)
 	}
 
 	// MARK: - Get methods
@@ -386,10 +394,10 @@ public final class GrapeDatabase {
 			}
 			while true {
 				try await self.storage?.reduceDataFile()
-				try await Task.sleep(nanoseconds: UInt64(self.memoryFlushInterval * 1_000_000_000))
+				try await Task.sleep(for: .seconds(self.getMemoryFlushInterval()))
 
 				self.removeExpiredData()
-				try await Task.sleep(nanoseconds: UInt64(self.memoryFlushInterval * 1_000_000_000))
+				try await Task.sleep(for: .seconds(self.getMemoryFlushInterval()))
 			}
 		}
 	}

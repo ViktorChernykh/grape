@@ -29,7 +29,7 @@ public struct AsyncFileLines: AsyncSequence {
 		// MARK: Constants
 
 		/// "\n" in UTF-8.
-		private static let newline = Data([0x0A])
+		private static let newline: Data = .init([0x0A])
 
 		// MARK: - Stored properties
 
@@ -45,6 +45,10 @@ public struct AsyncFileLines: AsyncSequence {
 			chunkSize: Int,
 			encoding: String.Encoding
 		) throws {
+			let fileManager: FileManager = .default
+			guard fileManager.fileExists(atPath: url.path(percentEncoded: false)) else {
+				throw GrapeError.dataFileNoExists
+			}
 			self.handle = try .init(forReadingFrom: url)
 			self.chunkSize = chunkSize
 			self.encoding = encoding

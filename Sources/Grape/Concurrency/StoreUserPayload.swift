@@ -9,13 +9,10 @@ import Foundation
 import TraderUserDto
 
 /// Thread-safe wrapper around a [String: CachePayload] dictionary.
-/// Uses reader–writer lock pattern with a concurrent DispatchQueue.
-final class StoreUserPayload {
+/// Uses reader–writer lock pattern with a concurrent pthread_rwlock_t.
+final class StoreUserPayload: @unchecked Sendable {
 
-	private let queue: DispatchQueue = .init(
-		label: "grape.payloadQueue",
-		attributes: .concurrent
-	)
+	private var lock: pthread_rwlock_t = .init()
 
 	/// Underlying storage (thread-unsafe).
 	private var _storage: [String: CachePayload] = .init()
@@ -26,46 +23,66 @@ final class StoreUserPayload {
 	// MARK: - Methods
 	/// Returns value for key.
 	func get(for key: String) -> CachePayload? {
-		queue.sync {
-			_storage[key]
+		pthread_rwlock_rdlock(&lock)
+		defer {
+			pthread_rwlock_unlock(&lock)
 		}
+		return _storage[key]
 	}
 
 	/// Sets value for the given key.
 	func set(_ value: CachePayload, for key: String) {
-		queue.async(flags: .barrier) {
-			self._storage[key] = value
+		pthread_rwlock_wrlock(&lock)
+		defer {
+			pthread_rwlock_unlock(&lock)
 		}
+		_storage[key] = value
 	}
 
 	/// Removes value for key.
 	func remove(for key: String) {
-		queue.async(flags: .barrier) {
-			self._storage[key] = nil
+		pthread_rwlock_wrlock(&lock)
+		defer {
+			pthread_rwlock_unlock(&lock)
 		}
+		_storage[key] = nil
 	}
 
 	/// Clear dictionary.
 	func clear() {
-		queue.async(flags: .barrier) {
-			self._storage = [:]
+		pthread_rwlock_wrlock(&lock)
+		defer {
+			pthread_rwlock_unlock(&lock)
 		}
+		_storage = [:]
 	}
 
 	/// Extracts the entire dictionary.
 	func getAll() -> [String: CachePayload] {
-		queue.sync {
-			_storage
+		pthread_rwlock_rdlock(&lock)
+		defer {
+			pthread_rwlock_unlock(&lock)
 		}
+		return _storage
 	}
 
 	/// Removes all expired data.
 	func removeExpiredData() {
-		let date: Date = .init()
-		for (key, model) in getAll() {
-			if let exp: Date = model.exp, exp < date {
-				remove(for: key)
-			}
+		pthread_rwlock_wrlock(&lock)
+		defer {
+			pthread_rwlock_unlock(&lock)
 		}
+
+		let currentDate: Date = .init()
+		_storage = _storage.filter { _, value in
+			if let exp: Date = value.exp, exp < currentDate {
+				return false
+			}
+			return true
+		}
+	}
+
+	deinit {
+		pthread_rwlock_destroy(&lock)
 	}
 }

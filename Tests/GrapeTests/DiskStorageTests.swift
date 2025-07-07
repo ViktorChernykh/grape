@@ -12,16 +12,18 @@ final class DiskStorageTests: XCTestCase {
 	}
 
 	override func tearDown() {
-		let supportFolderURL = FileManager.default
+		let supportFolderURL: URL? = FileManager.default
 			.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-		let url = supportFolderURL!
+
+		let url: URL = supportFolderURL!
 			.appendingPathComponent("Grape")
 			.appendingPathComponent("Cache-Test")
 			.appendingPathComponent("data")
 
 		if FileManager.default.fileExists(atPath: url.path) {
 			do {
-				try FileManager.default.removeItem(at: url)
+				let handle: FileHandle = try .init(forWritingTo: url)
+				try handle.truncate(atOffset: 0)
 			} catch {
 				print(error.localizedDescription)
 			}
@@ -97,7 +99,7 @@ final class DiskStorageTests: XCTestCase {
 		XCTAssertNil(cachedModel2)
 	}
 
-	static var allTests = [
+	static let allTests = [
 		("test_LoadCache_WhenCacheExists_ReturnCachedModel", test_LoadCache_WhenCacheExists_ReturnCachedModel),
 		("test_LoadCache_WhenRemoveCache_ReturnNil", test_LoadCache_WhenRemoveCache_ReturnNil),
 		("test_CacheWithExpiredData_WhenReduceDataFile_ReturnOnlyUnexpiredData", test_CacheWithExpiredData_WhenReduceDataFile_ReturnOnlyUnexpiredData),

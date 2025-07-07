@@ -8,6 +8,7 @@
 /// Library's Errors
 enum GrapeError: Error {
 	case couldNotWriteToCacheFile
+	case dataFileNoExists
 }
 
 extension GrapeError {
@@ -15,6 +16,8 @@ extension GrapeError {
 		switch self {
 		case .couldNotWriteToCacheFile:
 			return "Could not write to cache file."
+		case .dataFileNoExists:
+			return "Data file no exists."
 		}
 	}
 }

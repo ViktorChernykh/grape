@@ -79,7 +79,7 @@ struct DiskStorage: StorageProtocol {
 				result = true
 				break
 			} catch {
-				try await Task.sleep(nanoseconds: UInt64(10_000_000_000))
+				try await Task.sleep(for: .seconds(10))
 			}
 		}
 		if !result {

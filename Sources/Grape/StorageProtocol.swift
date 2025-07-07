@@ -5,7 +5,7 @@
 //  Created by Victor Chernykh on 17.06.2023.
 //
 
-public protocol StorageProtocol {
+public protocol StorageProtocol: Sendable {
 	func write(_ value: DiskModel) async throws
 	func loadCache() async throws -> (
 		[String: CacheDate],
