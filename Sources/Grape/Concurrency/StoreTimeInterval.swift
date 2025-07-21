@@ -14,7 +14,7 @@ final class StoreTimeInterval: @unchecked Sendable {
 	private var lock: pthread_rwlock_t = .init()
 
 	/// Underlying storage (thread-unsafe).
-	private var _storage: TimeInterval = 1800
+	private var _storage: TimeInterval = 1800	// 30 min
 
 	// MARK: - Init
 	init() { }

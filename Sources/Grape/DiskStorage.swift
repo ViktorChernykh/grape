@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import TraderUserDto
 
 /// Class for managing cache storage.
 struct DiskStorage: StorageProtocol {
@@ -146,13 +147,15 @@ struct DiskStorage: StorageProtocol {
 		[String: CacheInt],
 		[String: CacheString],
 		[String: CacheUUID],
-		[String: CacheString]
+		[String: CacheString],
+		[String: CachePayload]
 	) {
 		var cacheDate: [String: CacheDate] = [:]
 		var cacheInt: [String: CacheInt] = [:]
 		var cacheString: [String: CacheString] = [:]
 		var cacheUUID: [String: CacheUUID] = [:]
 		var cacheModel: [String: CacheString] = [:]
+		var cachePayload: [String: CachePayload] = [:]
 
 		var i: Int = 0
 		for try await line in AsyncFileLines(url: fileURL) {
@@ -194,10 +197,20 @@ struct DiskStorage: StorageProtocol {
 				}
 			case .model:
 				cacheModel[item.key] = CacheString(body: item.body, exp: item.exp)
+			case .payload:
+				guard let data: Data = item.body.data(using: String.Encoding.utf8) else {
+					print("[ ERROR ] Grape: incorrect data from \(fileURL) at \(i) line. [", #file, #function, #line, "]")
+					continue
+				}
+				guard let payload: UserPayload = try? decoder.decode(UserPayload.self, from: data) else {
+					print("[ ERROR ] Grape: incorrect UserPayload from \(fileURL) at \(i) line. [", #file, #function, #line, "]")
+					continue
+				}
+				cachePayload[item.key] = CachePayload(body: payload, exp: item.exp)
 			}
 		}
 
-		return (cacheDate, cacheInt, cacheString, cacheUUID, cacheModel)
+		return (cacheDate, cacheInt, cacheString, cacheUUID, cacheModel, cachePayload)
 	}
 
 	/// Removes obsolete data.

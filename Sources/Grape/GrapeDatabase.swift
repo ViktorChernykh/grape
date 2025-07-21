@@ -8,12 +8,10 @@
 import Foundation
 import TraderUserDto
 
-public let grape: GrapeDatabase = .shared
-
 public final class GrapeDatabase: Sendable {
 	// MARK: Stored Properties
-	static let shared: GrapeDatabase = .init()
-	
+	public static let shared: GrapeDatabase = .init()
+
 	private let storeDate: StoreDate = .init()
 	private let storeInt: StoreInt = .init()
 	private let storeModel: StoreString = .init()
@@ -63,13 +61,13 @@ public final class GrapeDatabase: Sendable {
 
 	// MARK: - Get methods
 
-	/// Get data from memory cache.
+	/// Gets a data from memory cache.
 	///
 	/// - Parameters:
-	///   - key: unique key for search data.
-	///   - as: type for decode data.
+	///   - key: Unique key for search data.
+	///   - type: Type for decode data.
 	/// - Returns: decoded data or nil if it not found or catch an error.
-	public func get<T: Codable>(for key: String, as: T.Type) throws -> T? {
+	public func get<T: Codable>(for key: String, as type: T.Type) throws -> T? {
 		guard let model: CacheString = storeModel.get(for: key) else {
 			return nil
 		}
@@ -84,84 +82,87 @@ public final class GrapeDatabase: Sendable {
 		return try decoder.decode(T.self, from: data)
 	}
 
-	/// Get string from memory cache.
+	/// Gets a string from memory cache.
 	///
 	/// - Parameters:
-	///   - key: unique key for search data.
+	///   - key: Unique key for search data.
 	/// - Returns: String or nil if it not found.
 	public func getString(for key: String) -> String? {
 		guard let model: CacheString = storeString.get(for: key) else {
 			return nil
 		}
 		if let exp: Date = model.exp, exp < Date() {
-			// The data has expired
-			return nil
+			return nil	// The data has expired
 		}
 		return model.body
 	}
 
-	/// Get date from memory cache.
+	/// Gets a date from memory cache.
 	///
 	/// - Parameters:
-	///   - key: unique key for search data.
+	///   - key: Unique key for search data.
 	/// - Returns: Date or nil if it not found.
 	public func getDate(for key: String) -> Date? {
 		guard let model: CacheDate = storeDate.get(for: key) else {
 			return nil
 		}
 		if let exp: Date = model.exp, exp < Date() {
-			// The data has expired
-			return nil
+			return nil	// The data has expired
 		}
 		return model.body
 	}
 
-	/// Get integer from memory cache.
+	/// Gets an integer from memory cache.
 	///
 	/// - Parameters:
-	///   - key: unique key for search data.
+	///   - key: Unique key for search data.
 	/// - Returns: Int or nil if it not found.
 	public func getInt(for key: String) -> Int? {
 		guard let model: CacheInt = storeInt.get(for: key) else {
 			return nil
 		}
 		if let exp: Date = model.exp, exp < Date() {
-			// The data has expired
-			return nil
+			return nil	// The data has expired
 		}
 		return model.body
 	}
 
-	/// Get uuid from memory cache.
+	/// Gets a uuid from memory cache.
 	///
 	/// - Parameters:
-	///   - key: unique key for search data.
+	///   - key: Unique key for search data.
 	/// - Returns: UUID or nil if it not found.
 	public func getUUID(for key: String) -> UUID? {
 		guard let model: CacheUUID = storeUUID.get(for: key) else {
 			return nil
 		}
 		if let exp: Date = model.exp, exp < Date() {
-			// The data has expired
-			return nil
+			return nil	// The data has expired
 		}
 		return model.body
 	}
 
-	/// Get UserPayload from memory cache.
+	/// Gets a UserPayload from memory cache.
 	///
 	/// - Parameters:
-	///   - key: unique key for search data.
+	///   - key: Unique key for search data.
 	/// - Returns: UserPayload or nil if it not found.
 	public func getPayload(for key: String) -> UserPayload? {
 		guard let model: CachePayload = storePayload.get(for: key) else {
 			return nil
 		}
 		if let exp: Date = model.exp, exp < Date() {
-			// The data has expired
-			return nil
+			return nil	// The data has expired
 		}
 		return model.body
+	}
+
+	/// Gets UserPayloads from memory cache for user ID.
+	///
+	/// - Parameter userId: User ID for filter.
+	/// - Returns: Array of UserPayloads with specified user ID.
+	public func getPayloads(with userId: UUID) -> [UserPayload] {
+		storePayload.get(for: userId)
 	}
 
 	// MARK: - Set methods
@@ -169,10 +170,10 @@ public final class GrapeDatabase: Sendable {
 	/// Store an object to memory cache and to disk.
 	///
 	/// - Parameters:
-	///   - model: object for save.
-	///   - key: unique key for search data.
-	///   - exp: expiration date.
-	///   - policy: disk save policy: `.none .sync .async` .
+	///   - model: Object for save.
+	///   - key: Unique key for search data.
+	///   - exp: Expiration date.
+	///   - policy: Disk save policy: `.none .sync .async` .
 	public func set<T: Codable>(_ model: T, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
 		let data: Data = try encoder.encode(model)
 		let string: String = .init(data: data, encoding: String.Encoding.utf8) ?? ""
@@ -181,26 +182,26 @@ public final class GrapeDatabase: Sendable {
 		try await setToDiscStorage(value: string, exp: exp, key: key, policy: policy, type: .model)
 	}
 
-	/// Store an string to memory cache and to disk.
+	/// Store a string to memory cache and to disk.
 	///
 	/// - Parameters:
-	///   - value: string for save.
-	///   - key: unique key for search data.
-	///   - exp: expiration date.
-	///   - policy: disk save policy: `.none .sync .async` .
+	///   - value: String for save.
+	///   - key: Unique key for search data.
+	///   - exp: Expiration date.
+	///   - policy: Disk save policy: `.none .sync .async` .
 	public func setString(_ value: String, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
 		let cacheValue: CacheString = .init(body: value, exp: exp)
 		storeString.set(cacheValue, for: key)
 		try await setToDiscStorage(value: value, exp: exp, key: key, policy: policy, type: .string)
 	}
 
-	/// Store an date to memory cache and to disk.
+	/// Store a date to memory cache and to disk.
 	///
 	/// - Parameters:
-	///   - value: date for save.
-	///   - key: unique key for search data.
-	///   - exp: expiration date.
-	///   - policy: disk save policy: `.none .sync .async` .
+	///   - value: Date for save.
+	///   - key: Unique key for search data.
+	///   - exp: Expiration date.
+	///   - policy: Disk save policy: `.none .sync .async` .
 	public func setDate(_ value: Date, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
 		let cacheValue: CacheDate = .init(body: value, exp: exp)
 		storeDate.set(cacheValue, for: key)
@@ -212,38 +213,43 @@ public final class GrapeDatabase: Sendable {
 	/// Store an integer to memory cache and to disk.
 	///
 	/// - Parameters:
-	///   - value: integer for save.
-	///   - key: unique key for search data.
-	///   - exp: expiration date.
-	///   - policy: disk save policy: `.none .sync .async` .
+	///   - value: Integer for save.
+	///   - key: Unique key for search data.
+	///   - exp: Expiration date.
+	///   - policy: Disk save policy: `.none .sync .async` .
 	public func setInt(_ value: Int, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
 		let cacheValue: CacheInt = .init(body: value, exp: exp)
 		storeInt.set(cacheValue, for: key)
 		try await setToDiscStorage(value: String(value), exp: exp, key: key, policy: policy, type: .int)
 	}
 
-	/// Store an uuid to memory cache and to disk.
+	/// Store a uuid to memory cache and to disk.
 	///
 	/// - Parameters:
-	///   - value: uuid for save.
-	///   - key: unique key for search data.
-	///   - exp: expiration date.
-	///   - policy: disk save policy: `.none .sync .async` .
+	///   - value: UUID for save.
+	///   - key: Unique key for search data.
+	///   - exp: Expiration date.
+	///   - policy: Disk save policy: `.none .sync .async` .
 	public func setUUID(_ value: UUID, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
 		let cacheValue: CacheUUID = .init(body: value, exp: exp)
 		storeUUID.set(cacheValue, for: key)
 		try await setToDiscStorage(value: value.uuidString, exp: exp, key: key, policy: policy, type: .uuid)
 	}
 
-	/// Store an UserPayload to memory cache and to disk.
+	/// Store a UserPayload to memory cache and to disk.
 	///
 	/// - Parameters:
 	///   - value: UserPayload for save.
-	///   - key: unique key for search data.
-	///   - exp: expiration date.
-	public func setPayload(_ value: UserPayload, for key: String, exp: Date? = nil) {
+	///   - key: Unique key for search data.
+	///   - exp: Expiration date.
+	///   - policy: Disk save policy: `.none .sync .async` .
+	public func setPayload(_ value: UserPayload, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
 		let cacheValue: CachePayload = .init(body: value, exp: exp)
 		storePayload.set(cacheValue, for: key)
+
+		let data: Data = try encoder.encode(value)
+		let string: String = .init(data: data, encoding: String.Encoding.utf8) ?? ""
+		try await setToDiscStorage(value: string, exp: exp, key: key, policy: policy, type: .payload)
 	}
 
 	/// Asynchronously saves data to disk storage with specified saving policy.
@@ -264,14 +270,14 @@ public final class GrapeDatabase: Sendable {
 		case .async:
 			// Asynchronous saving with medium priority
 			Task(priority: .medium) { [weak self] in
-				let diskModel: DiskModel = .init(body: value, exp: exp, key: key, type: .uuid)
+				let diskModel: DiskModel = .init(body: value, exp: exp, key: key, type: type)
 
 				// Attempt to write the model to storage
 				try await self?.storage?.write(diskModel)
 			}
 		case .sync:
 			// Synchronous saving operation
-			let diskModel: DiskModel = .init(body: value, exp: exp, key: key, type: .uuid)
+			let diskModel: DiskModel = .init(body: value, exp: exp, key: key, type: type)
 
 			// Write the model to storage synchronously
 			try await storage?.write(diskModel)
@@ -283,8 +289,8 @@ public final class GrapeDatabase: Sendable {
 	/// Deletes a data from the cache by key.
 	///
 	/// - Parameters:
-	///   - key: unique key for data.
-	///   - policy: disk save policy: `.none .sync .async` .
+	///   - key: Unique key for data.
+	///   - policy: Disk save policy: `.none .sync .async` .
 	public func reset(for key: String, policy: SavePolicy = .none) async throws {
 		storeModel.remove(for: key)
 		try await resetFromDiscStorage(key, policy)
@@ -293,8 +299,8 @@ public final class GrapeDatabase: Sendable {
 	/// Deletes a data from the cache by key.
 	///
 	/// - Parameters:
-	///   - key: unique key for data.
-	///   - policy: disk save policy: `.none .sync .async` .
+	///   - key: Unique key for data.
+	///   - policy: Disk save policy: `.none .sync .async` .
 	public func resetDate(for key: String, policy: SavePolicy = .none) async throws {
 		storeDate.remove(for: key)
 		try await resetFromDiscStorage(key, policy)
@@ -303,8 +309,8 @@ public final class GrapeDatabase: Sendable {
 	/// Deletes a data from the cache by key.
 	///
 	/// - Parameters:
-	///   - key: unique key for data.
-	///   - policy: disk save policy: `.none .sync .async` .
+	///   - key: Unique key for data.
+	///   - policy: Disk save policy: `.none .sync .async` .
 	public func resetInt(for key: String, policy: SavePolicy = .none) async throws {
 		storeInt.remove(for: key)
 		try await resetFromDiscStorage(key, policy)
@@ -313,8 +319,8 @@ public final class GrapeDatabase: Sendable {
 	/// Deletes a data from the cache by key.
 	///
 	/// - Parameters:
-	///   - key: unique key for data.
-	///   - policy: disk save policy: `.none .sync .async` .
+	///   - key: Unique key for data.
+	///   - policy: Disk save policy: `.none .sync .async` .
 	public func resetString(for key: String, policy: SavePolicy = .none) async throws {
 		storeString.remove(for: key)
 		try await resetFromDiscStorage(key, policy)
@@ -323,8 +329,8 @@ public final class GrapeDatabase: Sendable {
 	/// Deletes a data from the cache by key.
 	///
 	/// - Parameters:
-	///   - key: unique key for data.
-	///   - policy: disk save policy: `.none .sync .async` .
+	///   - key: Unique key for data.
+	///   - policy: Disk save policy: `.none .sync .async` .
 	public func resetUUID(for key: String, policy: SavePolicy = .none) async throws {
 		storeUUID.remove(for: key)
 		try await resetFromDiscStorage(key, policy)
@@ -332,10 +338,41 @@ public final class GrapeDatabase: Sendable {
 
 	/// Deletes a UserPayload from the cache by key.
 	///
-	/// - Parameter key: unique key for data.
-	public func resetPayload(for key: String) async throws {
+	/// - Parameters:
+	///   - key: Unique key for data.
+	///   - policy: Disk save policy: `.none .sync .async` .
+	public func resetPayload(for key: String, policy: SavePolicy) async throws {
 		storePayload.remove(for: key)
-		try await resetFromDiscStorage(key, .none)
+		try await resetFromDiscStorage(key, policy)
+	}
+
+	/// Deletes a UserPayload from the cache by userId.
+	///
+	/// - Parameters:
+	///   - key: Unique key for data.
+	///   - policy: Disk save policy: `.none .sync .async` .
+	public func resetPayload(for userId: UUID, policy: SavePolicy) async throws {
+		let keys: [String] = storePayload.remove(for: userId)
+		for key in keys {
+			try await resetFromDiscStorage(key, policy)
+		}
+	}
+
+	/// Update roleLevel for user ID.
+	///
+	/// - Parameters:
+	///   - userId: User id.
+	///   - role: User role type.
+	///   - policy: Disk save policy: `.none .sync .async` .
+	public func updatePayload(for userId: UUID, to role: UInt8, policy: SavePolicy) async throws {
+		let caches: [String: CachePayload] = storePayload.update(for: userId, role: role)
+		for (key, cache) in caches {
+			try await resetFromDiscStorage(key, policy)
+
+			let data: Data = try encoder.encode(cache)
+			let string: String = .init(data: data, encoding: String.Encoding.utf8) ?? ""
+			try await setToDiscStorage(value: string, exp: cache.exp, key: key, policy: policy, type: .payload)
+		}
 	}
 
 	/// Deletes all data from the cache.
@@ -352,7 +389,6 @@ public final class GrapeDatabase: Sendable {
 
 	/// Removes data from disk storage asynchronously or synchronously based on the specified policy
 	///
-	/// This method provides functionality to delete stored data from disk storage.
 	/// The removal process can be executed either asynchronously or synchronously,
 	/// depending on the specified saving policy.
 	///

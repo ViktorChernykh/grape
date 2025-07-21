@@ -1,3 +1,4 @@
+import TraderUserDto
 import XCTest
 @testable import Grape
 
@@ -145,6 +146,177 @@ final class GrapeDatabaseTests: XCTestCase {
 		XCTAssertNil(retrievedValue2, "Retrieved value should be nil after flushing cache")
 	}
 
+	func test_GetUserPayload_WhenKeyExists_ReturnValue() async throws {
+		// Given
+		try await sut.setupStorage(appName: "Test")
+		let key: String = "testKey"
+		let value: UserPayload = .init(
+			jti: UUID(),
+			sub: UUID(),
+			firstName: "Victor",
+			lang: .en,
+			roleLevel: 0,
+			tariff: .starter,
+			ip: ""
+		)
+		let expirationDate: Date = .init(timeIntervalSinceNow: 1)
+
+		// When
+		try await sut.setPayload(value, for: key, exp: expirationDate, policy: .sync)
+		let val = sut.getPayload(for: key)
+		let payload: UserPayload = try XCTUnwrap(val)
+
+		// Then
+		XCTAssertEqual(value.jti, payload.jti, "Retrieved value should match the original value before expiration")
+
+		sleep(2) // Sleep for 2 seconds to wait for the expiration
+		let expiredValue: UserPayload? = sut.getPayload(for: key)
+		XCTAssertNil(expiredValue, "Retrieved value should be nil after expiration")
+	}
+
+	func test_GetPayloads_ForUserId_ReturnValues() async throws {
+		// Given
+		try await sut.setupStorage(appName: "Test")
+
+		let key1: String = "testKey1"
+		let key2: String = "testKey2"
+		let key3: String = "testKey3"
+		let userId: UUID = .init()
+
+		let value1: UserPayload = .init(
+			jti: UUID(),
+			sub: userId,
+			firstName: "Victor",
+			lang: .en,
+			roleLevel: 0,
+			tariff: .starter,
+			ip: ""
+		)
+		let value2: UserPayload = .init(
+			jti: UUID(),
+			sub: userId,
+			firstName: "Victor",
+			lang: .en,
+			roleLevel: 0,
+			tariff: .starter,
+			ip: ""
+		)
+		let value3: UserPayload = .init(
+			jti: UUID(),
+			sub: UUID(),
+			firstName: "Victor",
+			lang: .en,
+			roleLevel: 0,
+			tariff: .starter,
+			ip: ""
+		)
+		let expirationDate: Date = .init(timeIntervalSinceNow: 1)
+
+		// When
+		try await sut.setPayload(value1, for: key1, exp: expirationDate, policy: .sync)
+		try await sut.setPayload(value2, for: key2, exp: expirationDate, policy: .sync)
+		try await sut.setPayload(value3, for: key3, exp: expirationDate, policy: .sync)
+		var values: [UserPayload] = sut.getPayloads(with: userId)
+
+		// Then
+		XCTAssertEqual(values.count, 2, "Retrieved 2 values")
+
+		sleep(2) // Sleep for 2 seconds to wait for the expiration
+		values = sut.getPayloads(with: userId)
+		XCTAssert(values.isEmpty, "Retrieved value should be empty")
+	}
+
+	func test_UpdateRoleType_ForUserId_UpdateValues() async throws {
+		// Given
+		try await sut.setupStorage(appName: "Test")
+
+		let key1: String = "testKey1"
+		let key2: String = "testKey2"
+		let userId: UUID = .init()
+
+		let value1: UserPayload = .init(
+			jti: UUID(),
+			sub: userId,
+			firstName: "Victor",
+			lang: .en,
+			roleLevel: 0,
+			tariff: .starter,
+			ip: ""
+		)
+		let value2: UserPayload = .init(
+			jti: UUID(),
+			sub: userId,
+			firstName: "Victor",
+			lang: .en,
+			roleLevel: 0,
+			tariff: .starter,
+			ip: ""
+		)
+
+		let expirationDate: Date = .init(timeIntervalSinceNow: 2)
+		try await sut.setPayload(value1, for: key1, exp: expirationDate, policy: .sync)
+		try await sut.setPayload(value2, for: key2, exp: expirationDate, policy: .sync)
+
+		// When
+		try await sut.updatePayload(for: userId, to: 1, policy: .sync)
+		let values: [UserPayload] = sut.getPayloads(with: userId)
+
+		// Then
+		XCTAssertEqual(values[0].roleLevel, 1)
+		XCTAssertEqual(values[1].roleLevel, 1)
+	}
+
+	func test_DeletePayloads_ForUserId_DeleteValues() async throws {
+		// Given
+		try await sut.setupStorage(appName: "Test")
+
+		let key1: String = "testKey1"
+		let key2: String = "testKey2"
+		let key3: String = "testKey3"
+		let userId: UUID = .init()
+
+		let value1: UserPayload = .init(
+			jti: UUID(),
+			sub: userId,
+			firstName: "Victor",
+			lang: .en,
+			roleLevel: 0,
+			tariff: .starter,
+			ip: ""
+		)
+		let value2: UserPayload = .init(
+			jti: UUID(),
+			sub: userId,
+			firstName: "Victor",
+			lang: .en,
+			roleLevel: 0,
+			tariff: .starter,
+			ip: ""
+		)
+		let value3: UserPayload = .init(
+			jti: UUID(),
+			sub: UUID(),
+			firstName: "Victor",
+			lang: .en,
+			roleLevel: 0,
+			tariff: .starter,
+			ip: ""
+		)
+		let expirationDate: Date = .init(timeIntervalSinceNow: 2)
+
+		// When
+		try await sut.setPayload(value1, for: key1, exp: expirationDate, policy: .sync)
+		try await sut.setPayload(value2, for: key2, exp: expirationDate, policy: .sync)
+		try await sut.setPayload(value3, for: key3, exp: expirationDate, policy: .sync)
+
+		// Then
+		var values: [UserPayload] = sut.getPayloads(with: userId)
+		XCTAssertEqual(values.count, 2)
+		try await sut.resetPayload(for: userId, policy: .sync)
+		values = sut.getPayloads(with: userId)
+		XCTAssertEqual(values.count, 0)
+	}
+
 	static let allTests = [
 		("test_SetUpGrapeDatabase_WhenSetup_ShouldSetNewProperties", test_SetUpGrapeDatabase_WhenSetup_ShouldSetNewProperties),
 		("test_GetCache_WhenKeyExists_ReturnValue", test_GetCache_WhenKeyExists_ReturnValue),
@@ -153,5 +325,9 @@ final class GrapeDatabaseTests: XCTestCase {
 		("test_GetCache_WhenCacheExpiration_ReturnNil", test_GetCache_WhenCacheExpiration_ReturnNil),
 		("test_GetCache_WhenCacheReset_ReturnNil", test_GetCache_WhenCacheReset_ReturnNil),
 		("test_RemoveExpiredData_WhenDataHasExpired_CacheMustBeDeleted", test_RemoveExpiredData_WhenDataHasExpired_CacheMustBeDeleted),
+		("test_GetUserPayload_WhenKeyExists_ReturnValue", test_GetUserPayload_WhenKeyExists_ReturnValue),
+		("test_GetPayloads_ForUserId_ReturnValues", test_GetPayloads_ForUserId_ReturnValues),
+		("test_UpdateRoleType_ForUserId_UpdateValues", test_UpdateRoleType_ForUserId_UpdateValues),
+		("test_DeletePayloads_ForUserId_DeleteValues", test_DeletePayloads_ForUserId_DeleteValues),
 	]
 }

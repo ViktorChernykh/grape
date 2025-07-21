@@ -6,10 +6,11 @@
 //
 
 /// Cache type of data for storing.
-public enum CacheType: Codable {
+public enum CacheType: Codable, Sendable {
 	case date
 	case int
 	case model
+	case payload
 	case string
 	case uuid
 }

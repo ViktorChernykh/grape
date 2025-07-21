@@ -1,10 +1,11 @@
+import TraderUserDto
 import XCTest
 @testable import Grape
 
 final class DiskStorageTests: XCTestCase {
 	var sut: DiskStorage!
-	let decoder = JSONDecoder()
-	let encoder = JSONEncoder()
+	let decoder: JSONDecoder = .init()
+	let encoder: JSONEncoder = .init()
 
 	override func setUp() {
 		super.setUp()
@@ -99,9 +100,42 @@ final class DiskStorageTests: XCTestCase {
 		XCTAssertNil(cachedModel2)
 	}
 
+	func test_LoadPayload_WhenCacheExists_ReturnUserPayload() async throws {
+		// Given
+		let key: String = "testKey"
+		let exp: Date = .init(timeIntervalSinceNow: 600)
+		let userId: UUID = .init()
+
+		let payload: UserPayload = .init(
+			jti: UUID(),
+			sub: userId,
+			firstName: "Victor",
+			lang: .en,
+			roleLevel: 0,
+			tariff: .starter,
+			ip: ""
+		)
+		let data1: Data = try encoder.encode(payload)
+		let string: String = .init(data: data1, encoding: String.Encoding.utf8) ?? ""
+		let diskModel: DiskModel = .init(body: string, exp: exp, key: key, type: .payload)
+
+		// When
+		try await sut.write(diskModel)
+		let cache: [String: CachePayload] = try await sut.loadCache().5
+		let cachedPayload: CachePayload? = cache[key]
+
+		// Then
+		let model: CachePayload = try XCTUnwrap(cachedPayload)
+
+		XCTAssertEqual(model.body.jti, payload.jti)
+		XCTAssertEqual(model.body.firstName, payload.firstName)
+		XCTAssertEqual(model.exp, exp)
+	}
+
 	static let allTests = [
 		("test_LoadCache_WhenCacheExists_ReturnCachedModel", test_LoadCache_WhenCacheExists_ReturnCachedModel),
 		("test_LoadCache_WhenRemoveCache_ReturnNil", test_LoadCache_WhenRemoveCache_ReturnNil),
 		("test_CacheWithExpiredData_WhenReduceDataFile_ReturnOnlyUnexpiredData", test_CacheWithExpiredData_WhenReduceDataFile_ReturnOnlyUnexpiredData),
+		("test_LoadPayload_WhenCacheExists_ReturnUserPayload", test_LoadPayload_WhenCacheExists_ReturnUserPayload),
 	]
 }

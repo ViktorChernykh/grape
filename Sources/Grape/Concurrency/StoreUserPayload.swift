@@ -30,6 +30,25 @@ final class StoreUserPayload: @unchecked Sendable {
 		return _storage[key]
 	}
 
+	func get(for userId: UUID) -> [UserPayload] {
+		pthread_rwlock_rdlock(&lock)
+		defer {
+			pthread_rwlock_unlock(&lock)
+		}
+		var payloads: [UserPayload] = .init()
+		let date: Date = .init()
+		for (_, cache) in _storage {
+			if cache.body.sub == userId {
+				if let exp: Date = cache.exp, exp < date {
+					continue
+				}
+				payloads.append(cache.body)
+			}
+		}
+
+		return payloads
+	}
+
 	/// Sets value for the given key.
 	func set(_ value: CachePayload, for key: String) {
 		pthread_rwlock_wrlock(&lock)
@@ -46,6 +65,51 @@ final class StoreUserPayload: @unchecked Sendable {
 			pthread_rwlock_unlock(&lock)
 		}
 		_storage[key] = nil
+	}
+
+	/// Removes value for userId.
+	func remove(for userId: UUID) -> [String] {
+		pthread_rwlock_wrlock(&lock)
+		defer {
+			pthread_rwlock_unlock(&lock)
+		}
+		var keys: [String] = .init()
+		for (key, payload) in _storage {
+			if payload.body.sub == userId {
+				keys.append(key)
+			}
+		}
+		for key in keys {
+			_storage[key] = nil
+		}
+		return keys
+	}
+
+	/// Update roleType for userId.
+	func update(for userId: UUID, role: UInt8) -> [String: CachePayload] {
+		pthread_rwlock_wrlock(&lock)
+		defer {
+			pthread_rwlock_unlock(&lock)
+		}
+		var caches: [String: CachePayload] = .init()
+		for (key, cache) in _storage {
+			if cache.body.sub == userId {
+				caches[key] = cache
+			}
+		}
+		for (key, cache) in caches {
+			let new: UserPayload = .init(
+				jti: cache.body.jti,
+				sub: cache.body.sub,
+				firstName: cache.body.firstName,
+				lang: cache.body.lang,
+				roleLevel: role,
+				tariff: cache.body.tariff,
+				ip: cache.body.ip
+			)
+			_storage[key] = CachePayload(body: new, exp: cache.exp)
+		}
+		return caches
 	}
 
 	/// Clear dictionary.

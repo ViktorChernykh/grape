@@ -7,7 +7,7 @@ struct TestModel: Codable {
 
 extension TestModel {
 	func toJson() -> String {
-		let data = try? JSONEncoder().encode(self)
+		let data: Data? = try? JSONEncoder().encode(self)
 		guard let data else {
 			return ""
 		}

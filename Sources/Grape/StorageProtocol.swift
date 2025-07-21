@@ -12,7 +12,8 @@ public protocol StorageProtocol: Sendable {
 		[String: CacheInt],
 		[String: CacheString],
 		[String: CacheUUID],
-		[String: CacheString]
+		[String: CacheString],
+		[String: CachePayload]
 	)
 	func reduceDataFile() async throws
 	func removeValue(forKey key: String) async throws
