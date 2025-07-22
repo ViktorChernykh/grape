@@ -86,7 +86,7 @@ final class StoreUserPayload: @unchecked Sendable {
 	}
 
 	/// Update roleType for userId.
-	func update(for userId: UUID, role: UInt16) -> [String: CachePayload] {
+	func update(for userId: UUID, role: Int16) -> [String: CachePayload] {
 		pthread_rwlock_wrlock(&lock)
 		defer {
 			pthread_rwlock_unlock(&lock)
