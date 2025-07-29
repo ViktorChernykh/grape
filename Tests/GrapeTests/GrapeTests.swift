@@ -258,7 +258,7 @@ final class GrapeDatabaseTests: XCTestCase {
 		try await sut.setPayload(value2, for: key2, exp: expirationDate, policy: .sync)
 
 		// When
-		try await sut.updatePayload(for: userId, to: 1, policy: .sync)
+		try await sut.updatePayload(role: 1, for: userId, policy: .sync)
 		let values: [UserPayload] = sut.getPayloads(with: userId)
 
 		// Then

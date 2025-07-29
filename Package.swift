@@ -29,9 +29,3 @@ var swiftSettings: [SwiftSetting] { [
 	// "ExistentialAny" is an option that makes the use of the `any` keyword for existential types `required`
 	.enableUpcomingFeature("ExistentialAny")
 ] }
-
-/// Linker settings for stripping symbols.
-var linkerSettings: [LinkerSetting] { [
-	// Linker settings to strip all symbols (incl. debug info)
-	.unsafeFlags(["-Xlinker", "-s"], .when(configuration: .release))
-] }

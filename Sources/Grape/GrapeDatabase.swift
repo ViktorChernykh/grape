@@ -361,11 +361,11 @@ public final class GrapeDatabase: Sendable {
 	/// Update roleLevel for user ID.
 	///
 	/// - Parameters:
-	///   - userId: User id.
 	///   - role: User role type.
+	///   - userId: User id.
 	///   - policy: Disk save policy: `.none .sync .async` .
-	public func updatePayload(for userId: UUID, to role: Int16, policy: SavePolicy) async throws {
-		let caches: [String: CachePayload] = storePayload.update(for: userId, role: role)
+	public func updatePayload(role: Int16, for userId: UUID, policy: SavePolicy) async throws {
+		let caches: [String: CachePayload] = storePayload.update(role: role, for: userId)
 		for (key, cache) in caches {
 			try await resetFromDiscStorage(key, policy)
 
