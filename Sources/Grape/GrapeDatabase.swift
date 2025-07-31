@@ -174,12 +174,12 @@ public final class GrapeDatabase: Sendable {
 	///   - key: Unique key for search data.
 	///   - exp: Expiration date.
 	///   - policy: Disk save policy: `.none .sync .async` .
-	public func set<T: Codable>(_ model: T, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
+	public func set<T: Codable>(_ model: T, for key: String, exp: Date? = nil, save policy: SavePolicy) async throws {
 		let data: Data = try encoder.encode(model)
 		let string: String = .init(data: data, encoding: String.Encoding.utf8) ?? ""
 		let cacheValue: CacheString = .init(body: string, exp: exp)
 		storeModel.set(cacheValue, for: key)
-		try await setToDiscStorage(value: string, exp: exp, key: key, policy: policy, type: .model)
+		try await setToDiscStorage(value: string, exp: exp, key: key, save: policy, type: .model)
 	}
 
 	/// Store a string to memory cache and to disk.
@@ -189,10 +189,10 @@ public final class GrapeDatabase: Sendable {
 	///   - key: Unique key for search data.
 	///   - exp: Expiration date.
 	///   - policy: Disk save policy: `.none .sync .async` .
-	public func setString(_ value: String, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
+	public func setString(_ value: String, for key: String, exp: Date? = nil, save policy: SavePolicy) async throws {
 		let cacheValue: CacheString = .init(body: value, exp: exp)
 		storeString.set(cacheValue, for: key)
-		try await setToDiscStorage(value: value, exp: exp, key: key, policy: policy, type: .string)
+		try await setToDiscStorage(value: value, exp: exp, key: key, save: policy, type: .string)
 	}
 
 	/// Store a date to memory cache and to disk.
@@ -202,12 +202,12 @@ public final class GrapeDatabase: Sendable {
 	///   - key: Unique key for search data.
 	///   - exp: Expiration date.
 	///   - policy: Disk save policy: `.none .sync .async` .
-	public func setDate(_ value: Date, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
+	public func setDate(_ value: Date, for key: String, exp: Date? = nil, save policy: SavePolicy) async throws {
 		let cacheValue: CacheDate = .init(body: value, exp: exp)
 		storeDate.set(cacheValue, for: key)
 
 		let string: String = String(value.timeIntervalSince1970)
-		try await setToDiscStorage(value: string, exp: exp, key: key, policy: policy, type: .date)
+		try await setToDiscStorage(value: string, exp: exp, key: key, save: policy, type: .date)
 	}
 
 	/// Store an integer to memory cache and to disk.
@@ -217,10 +217,10 @@ public final class GrapeDatabase: Sendable {
 	///   - key: Unique key for search data.
 	///   - exp: Expiration date.
 	///   - policy: Disk save policy: `.none .sync .async` .
-	public func setInt(_ value: Int, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
+	public func setInt(_ value: Int, for key: String, exp: Date? = nil, save policy: SavePolicy) async throws {
 		let cacheValue: CacheInt = .init(body: value, exp: exp)
 		storeInt.set(cacheValue, for: key)
-		try await setToDiscStorage(value: String(value), exp: exp, key: key, policy: policy, type: .int)
+		try await setToDiscStorage(value: String(value), exp: exp, key: key, save: policy, type: .int)
 	}
 
 	/// Store a uuid to memory cache and to disk.
@@ -230,10 +230,10 @@ public final class GrapeDatabase: Sendable {
 	///   - key: Unique key for search data.
 	///   - exp: Expiration date.
 	///   - policy: Disk save policy: `.none .sync .async` .
-	public func setUUID(_ value: UUID, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
+	public func setUUID(_ value: UUID, for key: String, exp: Date? = nil, save policy: SavePolicy) async throws {
 		let cacheValue: CacheUUID = .init(body: value, exp: exp)
 		storeUUID.set(cacheValue, for: key)
-		try await setToDiscStorage(value: value.uuidString, exp: exp, key: key, policy: policy, type: .uuid)
+		try await setToDiscStorage(value: value.uuidString, exp: exp, key: key, save: policy, type: .uuid)
 	}
 
 	/// Store a UserPayload to memory cache and to disk.
@@ -243,13 +243,13 @@ public final class GrapeDatabase: Sendable {
 	///   - key: Unique key for search data.
 	///   - exp: Expiration date.
 	///   - policy: Disk save policy: `.none .sync .async` .
-	public func setPayload(_ value: UserPayload, for key: String, exp: Date? = nil, policy: SavePolicy = .none) async throws {
+	public func setPayload(_ value: UserPayload, for key: String, exp: Date? = nil, save policy: SavePolicy) async throws {
 		let cacheValue: CachePayload = .init(body: value, exp: exp)
 		storePayload.set(cacheValue, for: key)
 
 		let data: Data = try encoder.encode(value)
 		let string: String = .init(data: data, encoding: String.Encoding.utf8) ?? ""
-		try await setToDiscStorage(value: string, exp: exp, key: key, policy: policy, type: .payload)
+		try await setToDiscStorage(value: string, exp: exp, key: key, save: policy, type: .payload)
 	}
 
 	/// Asynchronously saves data to disk storage with specified saving policy.
@@ -262,7 +262,7 @@ public final class GrapeDatabase: Sendable {
 	///   - type: Type of cache where the data will be stored.
 	///
 	/// - Throws: An error if any issue occurs during the saving process.
-	private func setToDiscStorage(value: String, exp: Date?, key: String, policy: SavePolicy, type: CacheType) async throws {
+	private func setToDiscStorage(value: String, exp: Date?, key: String, save policy: SavePolicy, type: CacheType) async throws {
 		switch policy {
 		case .none:
 			// No-op when saving policy is set to none
@@ -291,7 +291,7 @@ public final class GrapeDatabase: Sendable {
 	/// - Parameters:
 	///   - key: Unique key for data.
 	///   - policy: Disk save policy: `.none .sync .async` .
-	public func reset(for key: String, policy: SavePolicy = .none) async throws {
+	public func reset(for key: String, save policy: SavePolicy) async throws {
 		storeModel.remove(for: key)
 		try await resetFromDiscStorage(key, policy)
 	}
@@ -301,7 +301,7 @@ public final class GrapeDatabase: Sendable {
 	/// - Parameters:
 	///   - key: Unique key for data.
 	///   - policy: Disk save policy: `.none .sync .async` .
-	public func resetDate(for key: String, policy: SavePolicy = .none) async throws {
+	public func resetDate(for key: String, save policy: SavePolicy) async throws {
 		storeDate.remove(for: key)
 		try await resetFromDiscStorage(key, policy)
 	}
@@ -311,7 +311,7 @@ public final class GrapeDatabase: Sendable {
 	/// - Parameters:
 	///   - key: Unique key for data.
 	///   - policy: Disk save policy: `.none .sync .async` .
-	public func resetInt(for key: String, policy: SavePolicy = .none) async throws {
+	public func resetInt(for key: String, save policy: SavePolicy) async throws {
 		storeInt.remove(for: key)
 		try await resetFromDiscStorage(key, policy)
 	}
@@ -321,7 +321,7 @@ public final class GrapeDatabase: Sendable {
 	/// - Parameters:
 	///   - key: Unique key for data.
 	///   - policy: Disk save policy: `.none .sync .async` .
-	public func resetString(for key: String, policy: SavePolicy = .none) async throws {
+	public func resetString(for key: String, save policy: SavePolicy) async throws {
 		storeString.remove(for: key)
 		try await resetFromDiscStorage(key, policy)
 	}
@@ -331,7 +331,7 @@ public final class GrapeDatabase: Sendable {
 	/// - Parameters:
 	///   - key: Unique key for data.
 	///   - policy: Disk save policy: `.none .sync .async` .
-	public func resetUUID(for key: String, policy: SavePolicy = .none) async throws {
+	public func resetUUID(for key: String, save policy: SavePolicy) async throws {
 		storeUUID.remove(for: key)
 		try await resetFromDiscStorage(key, policy)
 	}
@@ -341,7 +341,7 @@ public final class GrapeDatabase: Sendable {
 	/// - Parameters:
 	///   - key: Unique key for data.
 	///   - policy: Disk save policy: `.none .sync .async` .
-	public func resetPayload(for key: String, policy: SavePolicy) async throws {
+	public func resetPayload(for key: String, save policy: SavePolicy) async throws {
 		storePayload.remove(for: key)
 		try await resetFromDiscStorage(key, policy)
 	}
@@ -351,7 +351,7 @@ public final class GrapeDatabase: Sendable {
 	/// - Parameters:
 	///   - key: Unique key for data.
 	///   - policy: Disk save policy: `.none .sync .async` .
-	public func resetPayload(for userId: UUID, policy: SavePolicy) async throws {
+	public func resetPayload(for userId: UUID, save policy: SavePolicy) async throws {
 		let keys: [String] = storePayload.remove(for: userId)
 		for key in keys {
 			try await resetFromDiscStorage(key, policy)
@@ -364,14 +364,14 @@ public final class GrapeDatabase: Sendable {
 	///   - role: User role type.
 	///   - userId: User id.
 	///   - policy: Disk save policy: `.none .sync .async` .
-	public func updatePayload(role: Int16, for userId: UUID, policy: SavePolicy) async throws {
+	public func updatePayload(role: Int16, for userId: UUID, save policy: SavePolicy) async throws {
 		let caches: [String: CachePayload] = storePayload.update(role: role, for: userId)
 		for (key, cache) in caches {
 			try await resetFromDiscStorage(key, policy)
 
 			let data: Data = try encoder.encode(cache)
 			let string: String = .init(data: data, encoding: String.Encoding.utf8) ?? ""
-			try await setToDiscStorage(value: string, exp: cache.exp, key: key, policy: policy, type: .payload)
+			try await setToDiscStorage(value: string, exp: cache.exp, key: key, save: policy, type: .payload)
 		}
 	}
 
