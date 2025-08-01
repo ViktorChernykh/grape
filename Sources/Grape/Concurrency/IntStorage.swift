@@ -1,5 +1,5 @@
 //
-//  StoreDate.swift
+//  IntStorage.swift
 //  grape
 //
 //  Created by Victor Chernykh on 07.07.2025.
@@ -7,21 +7,24 @@
 
 import Foundation
 
-/// Thread-safe wrapper around a [String: CacheDate] dictionary.
+/// Thread-safe wrapper around a [String: CacheInt] dictionary.
 /// Uses reader–writer lock pattern with a concurrent pthread_rwlock_t.
-final class StoreDate: @unchecked Sendable {
+final class IntStorage: @unchecked Sendable, PthreadInitProtocol {
 
-	private var lock: pthread_rwlock_t = .init()
+	var lock: pthread_rwlock_t = .init()
 
 	/// Underlying storage (thread-unsafe).
-	private var _storage: [String: CacheDate] = .init()
+	private var _storage: [String: CacheInt] = .init()
 
 	// MARK: - Init
-	init() { }
+	init() {
+		let message: String? = pthreadInit()
+		precondition(message == nil, message ?? "")
+	}
 
 	// MARK: - Methods
 	/// Returns value for key.
-	func get(for key: String) -> CacheDate? {
+	func get(for key: String) -> CacheInt? {
 		pthread_rwlock_rdlock(&lock)
 		defer {
 			pthread_rwlock_unlock(&lock)
@@ -30,7 +33,7 @@ final class StoreDate: @unchecked Sendable {
 	}
 
 	/// Sets value for the given key.
-	func set(_ value: CacheDate, for key: String) {
+	func set(_ value: CacheInt, for key: String) {
 		pthread_rwlock_wrlock(&lock)
 		defer {
 			pthread_rwlock_unlock(&lock)
@@ -39,7 +42,7 @@ final class StoreDate: @unchecked Sendable {
 	}
 
 	/// Sets initial values.
-	func setInit(_ values: [String: CacheDate]) {
+	func setInit(_ values: [String: CacheInt]) {
 		pthread_rwlock_wrlock(&lock)
 		defer {
 			pthread_rwlock_unlock(&lock)
@@ -66,7 +69,7 @@ final class StoreDate: @unchecked Sendable {
 	}
 
 	/// Extracts the entire dictionary.
-	func getAll() -> [String: CacheDate] {
+	func getAll() -> [String: CacheInt] {
 		pthread_rwlock_rdlock(&lock)
 		defer {
 			pthread_rwlock_unlock(&lock)
@@ -91,6 +94,7 @@ final class StoreDate: @unchecked Sendable {
 	}
 
 	deinit {
-		pthread_rwlock_destroy(&lock)
+		let result: Int32 = pthread_rwlock_destroy(&lock)
+		precondition(result == 0, "[ FATAL ] Grape: Failed destroy IntStorage")
 	}
 }

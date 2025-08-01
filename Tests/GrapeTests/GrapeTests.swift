@@ -80,7 +80,7 @@ final class GrapeDatabaseTests: XCTestCase {
 		try await sut.setupStorage(appName: "Test")
 		let key: String = "testKey"
 		let value: String = "testValue"
-		try await sut.set(value, for: key)
+		try await sut.set(value, for: key, save: .none)
 
 		// When
 		let retrievedValue: String? = try sut.get(for: key + "1", as: String.self)
@@ -97,7 +97,7 @@ final class GrapeDatabaseTests: XCTestCase {
 		let expirationDate: Date = .init(timeIntervalSinceNow: 1)
 
 		// When
-		try await sut.set(value, for: key, exp: expirationDate)
+		try await sut.set(value, for: key, exp: expirationDate, save: .none)
 		let retrievedValue = try sut.get(for: key, as: String.self)
 
 		// Then
@@ -115,8 +115,8 @@ final class GrapeDatabaseTests: XCTestCase {
 		let value: String = "testValue"
 
 		// When
-		try await sut.set(value, for: key)
-		try await sut.reset(for: key)
+		try await sut.set(value, for: key, save: .none)
+		try await sut.reset(for: key, save: .none)
 
 		let retrievedValue: String? = try sut.get(for: key, as: String.self)
 
@@ -133,7 +133,7 @@ final class GrapeDatabaseTests: XCTestCase {
 		let expirationDate: Date = .init(timeIntervalSinceNow: 1)
 
 		// When
-		try await sut.set(value, for: key, exp: expirationDate)
+		try await sut.set(value, for: key, exp: expirationDate, save: .none)
 
 		let retrievedValue1: String? = try sut.get(for: key, as: String.self)
 

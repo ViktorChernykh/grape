@@ -1,5 +1,5 @@
 //
-//  StoreString.swift
+//  StoreDate.swift
 //  grape
 //
 //  Created by Victor Chernykh on 07.07.2025.
@@ -7,21 +7,24 @@
 
 import Foundation
 
-/// Thread-safe wrapper around a [String: CacheString] dictionary.
+/// Thread-safe wrapper around a [String: CacheDate] dictionary.
 /// Uses reader–writer lock pattern with a concurrent pthread_rwlock_t.
-final class StoreString: @unchecked Sendable {
+final class DateStorage: @unchecked Sendable, PthreadInitProtocol {
 
-	private var lock: pthread_rwlock_t = .init()
+	var lock: pthread_rwlock_t = .init()
 
 	/// Underlying storage (thread-unsafe).
-	private var _storage: [String: CacheString] = .init()
+	private var _storage: [String: CacheDate] = .init()
 
 	// MARK: - Init
-	init() { }
+	init() {
+		let message: String? = pthreadInit()
+		precondition(message == nil, message ?? "")
+	}
 
 	// MARK: - Methods
 	/// Returns value for key.
-	func get(for key: String) -> CacheString? {
+	func get(for key: String) -> CacheDate? {
 		pthread_rwlock_rdlock(&lock)
 		defer {
 			pthread_rwlock_unlock(&lock)
@@ -30,7 +33,7 @@ final class StoreString: @unchecked Sendable {
 	}
 
 	/// Sets value for the given key.
-	func set(_ value: CacheString, for key: String) {
+	func set(_ value: CacheDate, for key: String) {
 		pthread_rwlock_wrlock(&lock)
 		defer {
 			pthread_rwlock_unlock(&lock)
@@ -39,7 +42,7 @@ final class StoreString: @unchecked Sendable {
 	}
 
 	/// Sets initial values.
-	func setInit(_ values: [String: CacheString]) {
+	func setInit(_ values: [String: CacheDate]) {
 		pthread_rwlock_wrlock(&lock)
 		defer {
 			pthread_rwlock_unlock(&lock)
@@ -66,7 +69,7 @@ final class StoreString: @unchecked Sendable {
 	}
 
 	/// Extracts the entire dictionary.
-	func getAll() -> [String: CacheString] {
+	func getAll() -> [String: CacheDate] {
 		pthread_rwlock_rdlock(&lock)
 		defer {
 			pthread_rwlock_unlock(&lock)
@@ -91,6 +94,7 @@ final class StoreString: @unchecked Sendable {
 	}
 
 	deinit {
-		pthread_rwlock_destroy(&lock)
+		let result: Int32 = pthread_rwlock_destroy(&lock)
+		precondition(result == 0, "[ FATAL ] Grape: Failed destroy DateStorage")
 	}
 }
