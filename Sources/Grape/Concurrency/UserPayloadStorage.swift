@@ -1,5 +1,5 @@
 //
-//  StoreUserPayload.swift
+//  UserPayloadStorage.swift
 //  grape
 //
 //  Created by Victor Chernykh on 07.07.2025.
@@ -10,15 +10,18 @@ import TraderUserDto
 
 /// Thread-safe wrapper around a [String: CachePayload] dictionary.
 /// Uses reader–writer lock pattern with a concurrent pthread_rwlock_t.
-final class StoreUserPayload: @unchecked Sendable {
+final class UserPayloadStorage: @unchecked Sendable, PthreadInitProtocol {
 
-	private var lock: pthread_rwlock_t = .init()
+	var lock: pthread_rwlock_t = .init()
 
 	/// Underlying storage (thread-unsafe).
 	private var _storage: [String: CachePayload] = .init()
 
 	// MARK: - Init
-	init() { }
+	init() {
+		let message: String? = pthreadInit()
+		precondition(message == nil, message ?? "")
+	}
 
 	// MARK: - Methods
 	/// Returns value for key.
