@@ -6,7 +6,7 @@
 //
 
 /// Save policy for storing data.
-public enum SavePolicy: Codable {
+public enum SavePolicy: Codable, Sendable {
 	/// None save data to persistent storage.
 	case none
 

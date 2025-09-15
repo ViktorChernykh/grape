@@ -8,7 +8,7 @@
 import struct Foundation.Date
 
 /// Model for storing to local file.
-public struct DiskModel: Codable {
+public struct DiskModel: Codable, Sendable {
 	// MARK: Stored Properties
 	public let body: String
 	public let exp: Date?

@@ -9,7 +9,7 @@ import struct Foundation.Date
 import TraderUserDto
 
 /// Model of data for storage in memory.
-public struct CachePayload: Codable {
+public struct CachePayload: Codable, Sendable {
 	// MARK: Stored Properties
 	public let body: UserPayload
 	public let exp: Date?

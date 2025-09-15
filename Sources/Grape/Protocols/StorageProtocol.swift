@@ -6,7 +6,7 @@
 //
 
 public protocol StorageProtocol: Sendable {
-	func write(_ value: DiskModel) async throws
+	func write(_ value: DiskModel) throws
 	func loadCache() async throws -> (
 		[String: CacheDate],
 		[String: CacheInt],

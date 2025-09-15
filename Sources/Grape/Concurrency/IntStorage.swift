@@ -95,6 +95,6 @@ final class IntStorage: @unchecked Sendable, PthreadInitProtocol {
 
 	deinit {
 		let result: Int32 = pthread_rwlock_destroy(&lock)
-		precondition(result == 0, "[ FATAL ] Grape: Failed destroy IntStorage")
+		precondition(result == 0, "[FATAL] Grape: Failed destroy IntStorage")
 	}
 }

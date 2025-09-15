@@ -9,7 +9,7 @@ import struct Foundation.Date
 import struct Foundation.UUID
 
 /// Model of data for storage in memory.
-public struct CacheUUID: Codable {
+public struct CacheUUID: Codable, Sendable {
 	// MARK: Stored Properties
 	public let body: UUID
 	public let exp: Date?

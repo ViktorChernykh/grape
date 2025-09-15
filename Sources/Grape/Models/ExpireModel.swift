@@ -8,7 +8,7 @@
 import struct Foundation.Date
 
 /// A model for decoding an expiration date from the data.
-public struct ExpireModel: Codable {
+public struct ExpireModel: Codable, Sendable {
 	// MARK: Stored Properties
 	public let exp: Date?
 

@@ -45,14 +45,14 @@ struct DiskStorage: StorageProtocol {
 		do {
 			try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
 		} catch {
-			fatalError("[ ERROR ] Grape: Couldn't create the grape cache directory.")
+			fatalError("[ERROR] Grape: Couldn't create the grape cache directory.")
 		}
 
 		// Create current file
 		fileURL = folder.appendingPathComponent("data")
 		if !FileManager.default.fileExists(atPath: fileURL.path) {
 			if !FileManager.default.createFile(atPath: fileURL.path, contents: nil) {
-				fatalError("[ ERROR ] Grape: Couldn't create the grape current cache file.")
+				fatalError("[ERROR] Grape: Couldn't create the grape current cache file.")
 			}
 		}
 	}
@@ -62,7 +62,7 @@ struct DiskStorage: StorageProtocol {
 	/// Writes data to end of cache file.
 	///
 	/// - Parameter cacheModel: data to save.
-	func write(_ cacheModel: DiskModel) async throws {
+	func write(_ cacheModel: DiskModel) throws {
 		let data: Data = try encoder.encode(cacheModel) + "\n".data(using: String.Encoding.utf8)!
 		let handle: FileHandle = try .init(forWritingTo: fileURL)
 		try handle.seekToEnd()
@@ -70,22 +70,11 @@ struct DiskStorage: StorageProtocol {
 			do {
 				try handle.close()
 			} catch {
-				print("[ ERROR ] Grape: Cannot close file \(fileURL.absoluteString). [", #file, #function, #line, "]")
+				print("[ERROR] Grape: Cannot close file \(fileURL.absoluteString). [", #fileID, #function, #line, "]")
 			}
 		}
-		var result: Bool = false
-		for _ in 0...9 {
-			do {
-				try handle.write(contentsOf: data)
-				result = true
-				break
-			} catch {
-				try await Task.sleep(for: .seconds(10))
-			}
-		}
-		if !result {
-			throw GrapeError.couldNotWriteToCacheFile
-		}
+
+		try handle.write(contentsOf: data)
 	}
 
 	/// Deletes the value from the file by the specified key.
@@ -99,12 +88,12 @@ struct DiskStorage: StorageProtocol {
 			i += 1
 			// Encode row back to data
 			guard let data: Data = line.data(using: String.Encoding.utf8) else {
-				print("[ ERROR ] Grape: incorrect data from \(fileURL) at \(i) line. [", #file, #function, #line, "]")
+				print("[ERROR] Grape: incorrect data from \(fileURL) at \(i) line. [", #fileID, #function, #line, "]")
 				continue
 			}
 			// Decode expire date
 			guard let item: DiskModel = try? decoder.decode(DiskModel.self, from: data) else {
-				print("[ ERROR ] Grape: incorrect data from \(fileURL) at \(i) line. [", #file, #function, #line, "]")
+				print("[ERROR] Grape: incorrect data from \(fileURL) at \(i) line. [", #fileID, #function, #line, "]")
 				continue
 			}
 			// Skip removed data
@@ -121,7 +110,7 @@ struct DiskStorage: StorageProtocol {
 			do {
 				try handle.close()
 			} catch {
-				print("[ ERROR ] Grape: Cannot close file \(fileURL.absoluteString). [", #file, #function, #line, "]")
+				print("[ERROR] Grape: Cannot close file \(fileURL.absoluteString). [", #fileID, #function, #line, "]")
 			}
 		}
 
@@ -165,12 +154,12 @@ struct DiskStorage: StorageProtocol {
 			}
 			// Encode row back to data
 			guard let data: Data = line.data(using: String.Encoding.utf8) else {
-				print("[ ERROR ] Grape: incorrect data from \(fileURL) at \(i) line. [", #file, #function, #line, "]")
+				print("[ERROR] Grape: incorrect data from \(fileURL) at \(i) line. [", #fileID, #function, #line, "]")
 				continue
 			}
 			// Decode disk data
 			guard let item: DiskModel = try? decoder.decode(DiskModel.self, from: data) else {
-				print("[ ERROR ] Grape: incorrect data from \(fileURL) at \(i) line. [", #file, #function, #line, "]")
+				print("[ERROR] Grape: incorrect data from \(fileURL) at \(i) line. [", #fileID, #function, #line, "]")
 				continue
 			}
 			// Skip expired data
@@ -199,11 +188,11 @@ struct DiskStorage: StorageProtocol {
 				cacheModel[item.key] = CacheString(body: item.body, exp: item.exp)
 			case .payload:
 				guard let data: Data = item.body.data(using: String.Encoding.utf8) else {
-					print("[ ERROR ] Grape: incorrect data from \(fileURL) at \(i) line. [", #file, #function, #line, "]")
+					print("[ERROR] Grape: incorrect data from \(fileURL) at \(i) line. [", #fileID, #function, #line, "]")
 					continue
 				}
 				guard let payload: UserPayload = try? decoder.decode(UserPayload.self, from: data) else {
-					print("[ ERROR ] Grape: incorrect UserPayload from \(fileURL) at \(i) line. [", #file, #function, #line, "]")
+					print("[ERROR] Grape: incorrect UserPayload from \(fileURL) at \(i) line. [", #fileID, #function, #line, "]")
 					continue
 				}
 				cachePayload[item.key] = CachePayload(body: payload, exp: item.exp)
@@ -224,12 +213,12 @@ struct DiskStorage: StorageProtocol {
 			i += 1
 			// Encode row back to data
 			guard let data: Data = line.data(using: String.Encoding.utf8) else {
-				print("[ ERROR ] Grape: incorrect data from \(fileURL) at \(i) line. [", #file, #function, #line, "]")
+				print("[ERROR] Grape: incorrect data from \(fileURL) at \(i) line. [", #fileID, #function, #line, "]")
 				continue
 			}
 			// Decode expire date
 			guard let item: ExpireModel = try? decoder.decode(ExpireModel.self, from: data) else {
-				print("[ ERROR ] Grape: incorrect data from \(fileURL) at \(i) line. [", #file, #function, #line, "]")
+				print("[ERROR] Grape: incorrect data from \(fileURL) at \(i) line. [", #fileID, #function, #line, "]")
 				continue
 			}
 			// Skip expired data
@@ -246,7 +235,7 @@ struct DiskStorage: StorageProtocol {
 			do {
 				try handle.close()
 			} catch {
-				print("[ ERROR ] Grape: Cannot close file \(fileURL.absoluteString). [", #file, #function, #line, "]")
+				print("[ERROR] Grape: Cannot close file \(fileURL.absoluteString). [", #fileID, #function, #line, "]")
 			}
 		}
 

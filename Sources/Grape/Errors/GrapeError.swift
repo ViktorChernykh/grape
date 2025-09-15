@@ -6,7 +6,7 @@
 //
 
 /// Library's Errors
-enum GrapeError: Error {
+enum GrapeError: Error, Sendable {
 	case couldNotWriteToCacheFile
 	case dataFileNoExists
 }

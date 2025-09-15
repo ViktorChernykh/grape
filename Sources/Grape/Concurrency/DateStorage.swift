@@ -95,6 +95,6 @@ final class DateStorage: @unchecked Sendable, PthreadInitProtocol {
 
 	deinit {
 		let result: Int32 = pthread_rwlock_destroy(&lock)
-		precondition(result == 0, "[ FATAL ] Grape: Failed destroy DateStorage")
+		precondition(result == 0, "[FATAL] Grape: Failed destroy DateStorage")
 	}
 }

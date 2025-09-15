@@ -8,7 +8,7 @@
 import struct Foundation.Date
 
 /// Model of data for storage in memory.
-public struct CacheInt: Codable {
+public struct CacheInt: Codable, Sendable {
 	// MARK: Stored Properties
 	public let body: Int
 	public let exp: Date?
