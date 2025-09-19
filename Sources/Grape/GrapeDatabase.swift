@@ -28,7 +28,7 @@ public final class GrapeDatabase: Sendable {
 	private var storage: (any StorageProtocol)?
 
 	nonisolated(unsafe)
-	private var taskFlush: Task<Void, Error>?
+	private var taskFlush: Task<Void, any Error>?
 
 	// MARK: - Init
 	private init() { }

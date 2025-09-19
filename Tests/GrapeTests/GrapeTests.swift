@@ -51,7 +51,7 @@ final class GrapeDatabaseTests: XCTestCase {
 		try await sut.setupStorage(appName: "Test")
 		let key: String = "testKey"
 		let value: TestModel = .init(name: "Name", age: 30)
-		try await sut.set(value, for: key, save: .sync)
+		try sut.set(value, for: key, save: .sync)
 
 		// When
 		let model: TestModel? = try sut.get(for: key, as: TestModel.self)
@@ -66,7 +66,7 @@ final class GrapeDatabaseTests: XCTestCase {
 		try await sut.setupStorage(appName: "Test")
 		let key: String = "testKey"
 		let value: String = "Name"
-		try await sut.setString(value, for: key, save: .sync)
+		try sut.setString(value, for: key, save: .sync)
 
 		// When
 		let cache: String? = sut.getString(for: key)
@@ -80,7 +80,7 @@ final class GrapeDatabaseTests: XCTestCase {
 		try await sut.setupStorage(appName: "Test")
 		let key: String = "testKey"
 		let value: String = "testValue"
-		try await sut.set(value, for: key, save: .none)
+		try sut.set(value, for: key, save: .none)
 
 		// When
 		let retrievedValue: String? = try sut.get(for: key + "1", as: String.self)
@@ -97,7 +97,7 @@ final class GrapeDatabaseTests: XCTestCase {
 		let expirationDate: Date = .init(timeIntervalSinceNow: 1)
 
 		// When
-		try await sut.set(value, for: key, exp: expirationDate, save: .none)
+		try sut.set(value, for: key, exp: expirationDate, save: .none)
 		let retrievedValue = try sut.get(for: key, as: String.self)
 
 		// Then
@@ -115,8 +115,8 @@ final class GrapeDatabaseTests: XCTestCase {
 		let value: String = "testValue"
 
 		// When
-		try await sut.set(value, for: key, save: .none)
-		try await sut.reset(for: key, save: .none)
+		try sut.set(value, for: key, save: .none)
+		try sut.reset(for: key, save: .none)
 
 		let retrievedValue: String? = try sut.get(for: key, as: String.self)
 
@@ -133,7 +133,7 @@ final class GrapeDatabaseTests: XCTestCase {
 		let expirationDate: Date = .init(timeIntervalSinceNow: 1)
 
 		// When
-		try await sut.set(value, for: key, exp: expirationDate, save: .none)
+		try sut.set(value, for: key, exp: expirationDate, save: .none)
 
 		let retrievedValue1: String? = try sut.get(for: key, as: String.self)
 
@@ -162,7 +162,7 @@ final class GrapeDatabaseTests: XCTestCase {
 		let expirationDate: Date = .init(timeIntervalSinceNow: 1)
 
 		// When
-		try await sut.setPayload(value, for: key, exp: expirationDate, save: .sync)
+		try sut.setPayload(value, for: key, exp: expirationDate, save: .sync)
 		let val = sut.getPayload(for: key)
 		let payload: UserPayload = try XCTUnwrap(val)
 
@@ -213,9 +213,9 @@ final class GrapeDatabaseTests: XCTestCase {
 		let expirationDate: Date = .init(timeIntervalSinceNow: 1)
 
 		// When
-		try await sut.setPayload(value1, for: key1, exp: expirationDate, save: .sync)
-		try await sut.setPayload(value2, for: key2, exp: expirationDate, save: .sync)
-		try await sut.setPayload(value3, for: key3, exp: expirationDate, save: .sync)
+		try sut.setPayload(value1, for: key1, exp: expirationDate, save: .sync)
+		try sut.setPayload(value2, for: key2, exp: expirationDate, save: .sync)
+		try sut.setPayload(value3, for: key3, exp: expirationDate, save: .sync)
 		var values: [UserPayload] = sut.getPayloads(with: userId)
 
 		// Then
@@ -254,11 +254,11 @@ final class GrapeDatabaseTests: XCTestCase {
 		)
 
 		let expirationDate: Date = .init(timeIntervalSinceNow: 2)
-		try await sut.setPayload(value1, for: key1, exp: expirationDate, save: .sync)
-		try await sut.setPayload(value2, for: key2, exp: expirationDate, save: .sync)
+		try sut.setPayload(value1, for: key1, exp: expirationDate, save: .sync)
+		try sut.setPayload(value2, for: key2, exp: expirationDate, save: .sync)
 
 		// When
-		try await sut.updatePayload(role: 1, for: userId, save: .sync)
+		try sut.updatePayload(role: 1, for: userId, save: .sync)
 		let values: [UserPayload] = sut.getPayloads(with: userId)
 
 		// Then
@@ -305,14 +305,14 @@ final class GrapeDatabaseTests: XCTestCase {
 		let expirationDate: Date = .init(timeIntervalSinceNow: 2)
 
 		// When
-		try await sut.setPayload(value1, for: key1, exp: expirationDate, save: .sync)
-		try await sut.setPayload(value2, for: key2, exp: expirationDate, save: .sync)
-		try await sut.setPayload(value3, for: key3, exp: expirationDate, save: .sync)
+		try sut.setPayload(value1, for: key1, exp: expirationDate, save: .sync)
+		try sut.setPayload(value2, for: key2, exp: expirationDate, save: .sync)
+		try sut.setPayload(value3, for: key3, exp: expirationDate, save: .sync)
 
 		// Then
 		var values: [UserPayload] = sut.getPayloads(with: userId)
 		XCTAssertEqual(values.count, 2)
-		try await sut.resetPayload(for: userId, save: .sync)
+		try sut.resetPayload(for: userId, save: .sync)
 		values = sut.getPayloads(with: userId)
 		XCTAssertEqual(values.count, 0)
 	}
