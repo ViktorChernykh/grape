@@ -28,7 +28,7 @@ public struct DiskModel: Codable, Sendable {
 		self.type = type
 	}
 
-	public init(from decoder: Decoder) throws {
+	public init(from decoder: any Decoder) throws {
 		let container = try decoder.container(keyedBy: CodingKeys.self)
 		body = try container.decode(String.self, forKey: .body)
 		exp = try container.decode(Date.self, forKey: .exp)

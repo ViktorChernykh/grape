@@ -41,7 +41,7 @@ final class DiskStorageTests: XCTestCase {
 		let value: DiskModel = .init(body: string, exp: exp, key: key, type: .model)
 
 		// When
-		try await sut.write(value)
+		try sut.write(value)
 		let cache: [String : CacheString] = try await sut.loadCache().4
 		let cachedModel: CacheString? = cache[key]
 		let data: Data = cachedModel?.body.data(using: .utf8) ?? Data()
@@ -61,7 +61,7 @@ final class DiskStorageTests: XCTestCase {
 		let exp: Date = .init(timeIntervalSinceNow: 60)
 		let string: String = model.toJson()
 		let value: DiskModel = .init(body: string, exp: exp, key: key, type: .model)
-		try await sut.write(value)
+		try sut.write(value)
 
 		// When
 		try await sut.removeValue(forKey: key)
@@ -87,8 +87,8 @@ final class DiskStorageTests: XCTestCase {
 		let value2: DiskModel = .init(body: string2, exp: exp2, key: key2, type: .model)
 
 		// When
-		try await sut.write(value1)
-		try await sut.write(value2)
+		try sut.write(value1)
+		try sut.write(value2)
 		try await sut.reduceDataFile()
 
 		let loadedCache: [String : CacheString] = try await sut.loadCache().4
@@ -120,7 +120,7 @@ final class DiskStorageTests: XCTestCase {
 		let diskModel: DiskModel = .init(body: string, exp: exp, key: key, type: .payload)
 
 		// When
-		try await sut.write(diskModel)
+		try sut.write(diskModel)
 		let cache: [String: CachePayload] = try await sut.loadCache().5
 		let cachedPayload: CachePayload? = cache[key]
 
