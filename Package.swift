@@ -4,14 +4,14 @@ import PackageDescription
 let package = Package(
     name: "grape",
     platforms: [
-        .macOS(.v13),
-        .iOS(.v15),
+        .macOS(.v14),
+        .iOS(.v17),
     ],
     products: [
         .library(name: "Grape", targets: ["Grape"]),
 	],
 	dependencies: [
-		.package(url: "https://github.com/ViktorChernykh/trader-user-dto.git", from: "0.0.1"),
+		.package(url: "git@github.com:ViktorChernykh/trader-user-dto.git", from: "0.8.0"),
 	],
 	targets: [
 		.target(
